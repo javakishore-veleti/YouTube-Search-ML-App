@@ -1,0 +1,15 @@
+{
+  "name": "youtube-search-ml-app",
+  "version": "1.0.0",
+  "description": "Deployment and environment setup scripts for YouTube Search ML App",
+  "private": true,
+  "scripts": {
+    "env-setup:init:install": "pip install -r requirements.txt",
+    "env-setup:portals:install": "cd Portals/youtube-search && npm install && cd ../youtube-search-admin && npm install",
+    "app-api-web:start": "bash Scripts/api-web-start.sh",
+    "app-api-web:status": "bash Scripts/api-web-status.sh",
+    "app-api-web:stop": "bash Scripts/api-web-stop.sh",
+    "portal:search:start": "cd Portals/youtube-search && npx ng serve --port 4200 --open",
+    "portal:admin:start": "cd Portals/youtube-search-admin && npx ng serve --port 4201 --open"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "apis": [
+    "app.app_model_serving.api.health_check",
+    "app.app_common.app_info",
+    "app.app_model_builder.api.builder_health"
+  ]
+}

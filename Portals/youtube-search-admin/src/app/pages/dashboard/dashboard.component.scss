@@ -1,0 +1,48 @@
+.dashboard-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.text-ocean { color: #1B4965 !important; }
+.text-sky   { color: #5FA8D3 !important; }
+.text-mint  { color: #62C4AA !important; }
+.text-muted-cool { color: #6b8a99 !important; }
+
+.spinner-border.text-ocean { color: #1B4965 !important; }
+
+.alert-ocean {
+  background: #dff0fa;
+  border: 1px solid #b3d9f0;
+  color: #1B4965;
+  border-radius: 14px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(27, 73, 101, 0.08);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(27, 73, 101, 0.14);
+  }
+}
+
+.location-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e8faf8 100%);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(27, 73, 101, 0.06);
+}
+
+.bg-success-soft { background: #e6f9ed !important; }
+.bg-danger-soft  { background: #fde8e8 !important; }
+
+.version-badge {
+  background: linear-gradient(135deg, #5FA8D3, #1B4965);
+  color: #fff;
+  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}

@@ -1,0 +1,34 @@
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1B4965 0%, #5FA8D3 60%, #BEE9E8 100%);
+  border-radius: 0 24px 24px 0;
+  box-shadow: 4px 0 20px rgba(27, 73, 101, 0.25);
+}
+
+.sidebar-brand {
+  text-align: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff !important;
+    transform: translateX(4px);
+  }
+
+  &.active {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+}

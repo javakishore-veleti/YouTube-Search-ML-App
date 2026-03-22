@@ -1,0 +1,60 @@
+<div class="search-container p-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-search-heart me-2 text-coral"></i>Search Videos</h2>
+  <p class="text-muted-warm mb-4">Select a model, enter your query, and discover.</p>
+
+  <!-- Search Controls -->
+  <div class="search-bar-card p-4 mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Model</label>
+        <select class="form-select custom-select" [(ngModel)]="selectedModelId">
+          <option *ngFor="let m of models" [value]="m.id">{{ m.name }}</option>
+        </select>
+      </div>
+      <div class="col-md-7">
+        <label class="form-label fw-semibold">Search Query</label>
+        <input
+          type="text"
+          class="form-control custom-input"
+          placeholder="e.g. How to train a neural network..."
+          [(ngModel)]="query"
+          (keyup.enter)="onSearch()"
+        />
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-coral w-100 rounded-pill" (click)="onSearch()" [disabled]="isLoading">
+          <i class="bi bi-search me-1"></i>
+          {{ isLoading ? 'Searching...' : 'Search' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-coral" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted-warm">Fetching results...</p>
+  </div>
+
+  <!-- No results -->
+  <div *ngIf="hasSearched && !isLoading && results.length === 0" class="text-center py-5">
+    <i class="bi bi-emoji-frown fs-1 text-amber"></i>
+    <p class="mt-2 text-muted-warm">No results found. Try a different query!</p>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="!isLoading && results.length > 0" class="row g-4">
+    <div *ngFor="let r of results" class="col-md-6 col-lg-4">
+      <div class="result-card">
+        <img [src]="r.thumbnail" [alt]="r.title" class="result-thumbnail" />
+        <div class="p-3">
+          <h6 class="fw-bold mb-1">{{ r.title }}</h6>
+          <small class="text-teal fw-semibold"><i class="bi bi-person-fill me-1"></i>{{ r.channel }}</small>
+          <p class="mt-2 mb-0 result-desc">{{ r.description }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
