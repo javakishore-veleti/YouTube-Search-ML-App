@@ -21,3 +21,19 @@
   color: #1B4965;
   border-radius: 14px;
 }
+
+.btn-outline-ocean {
+  color: #1B4965;
+  border: 2px solid #1B4965;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: #1B4965;
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+

@@ -1,0 +1,70 @@
+<div class="queue-container p-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-list-check me-2 text-ocean"></i>Build Queue</h2>
+  <p class="text-muted mb-4">Model build requests processed by the background scheduler.</p>
+
+  <p *ngIf="error" class="text-danger">{{ error }}</p>
+
+  <!-- Empty state -->
+  <div *ngIf="loaded && items.length === 0" class="text-center py-5">
+    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+    <p class="fw-semibold mb-1">No build requests yet</p>
+    <small class="text-muted">Submit a model build from the Build Model page.</small>
+  </div>
+
+  <!-- Queue table -->
+  <div class="card p-3" *ngIf="items.length > 0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">Queue <small class="text-muted fw-normal">({{ total }})</small></h5>
+      <small class="text-muted"><i class="bi bi-arrow-repeat me-1"></i>Auto-refreshes every 15s</small>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Model Name</th>
+            <th>Approach</th>
+            <th>Videos</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Started</th>
+            <th>Completed</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td class="text-muted">{{ item.id }}</td>
+            <td class="fw-semibold">{{ item.model_name }}</td>
+            <td>{{ item.approach_type }}</td>
+            <td>{{ item.selected_videos_count }}</td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="badge(item.status)">{{ item.status }}</span>
+            </td>
+            <td class="text-muted small">{{ item.created_dt | date:'short' }}</td>
+            <td class="text-muted small">{{ item.started_dt ? (item.started_dt | date:'short') : '—' }}</td>
+            <td class="text-muted small">{{ item.completed_dt ? (item.completed_dt | date:'short') : '—' }}</td>
+            <td class="text-danger small">{{ item.error_message || '' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav *ngIf="totalPages > 1" class="mt-3 d-flex justify-content-between align-items-center">
+      <small class="text-muted">Page {{ page }} / {{ totalPages }}</small>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="page === 1">
+          <a class="page-link" (click)="load(page - 1)">‹</a>
+        </li>
+        <li *ngFor="let p of pages" class="page-item" [class.active]="p === page">
+          <a class="page-link" (click)="load(p)">{{ p }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="page === totalPages">
+          <a class="page-link" (click)="load(page + 1)">›</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

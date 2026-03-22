@@ -1,0 +1,7 @@
+[
+  {"id": "classical_ml", "name": "Classical ML (scikit-learn)", "package": "approach_01"},
+  {"id": "pytorch",      "name": "PyTorch",                    "package": "approach_02"},
+  {"id": "tensorflow",   "name": "TensorFlow / Keras",         "package": "approach_03"},
+  {"id": "sagemaker",    "name": "AWS SageMaker",              "package": "approach_04"},
+  {"id": "llm",          "name": "Large Language Model (LLM)", "package": "approach_05"}
+]

@@ -47,7 +47,10 @@ fi
 uvicorn app.main:app \
   --host 0.0.0.0 \
   --port "$API_PORT" \
-  --reload &
+  --reload \
+  --reload-exclude "*.db" \
+  --reload-exclude "*.log" \
+  --reload-exclude "app/data/*" &
 API_PID=$!
 log "FastAPI started (PID: ${API_PID}) → http://localhost:${API_PORT}"
 log "API Docs available at           → http://localhost:${API_PORT}/docs"

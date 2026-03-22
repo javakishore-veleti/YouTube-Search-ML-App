@@ -1,42 +1,41 @@
 <div class="settings-container p-4">
   <h2 class="fw-bold mb-1"><i class="bi bi-sliders me-2 text-ocean"></i>Settings</h2>
-  <p class="text-muted-cool mb-4">Manage browser-stored credentials and preferences.</p>
+  <p class="text-muted-cool mb-4">Server configuration and API key status.</p>
 
   <div class="settings-card p-4">
     <h5 class="fw-bold mb-3"><i class="bi bi-key-fill me-2 text-sky"></i>YouTube API Key</h5>
 
-    <div *ngIf="hasApiKey" class="d-flex align-items-center justify-content-between">
+    <div *ngIf="apiKeyConfigured" class="d-flex align-items-center justify-content-between">
       <div>
         <span class="badge bg-success-soft text-success px-3 py-2 rounded-pill">
-          <i class="bi bi-check-circle-fill me-1"></i> API Key is stored in browser
+          <i class="bi bi-check-circle-fill me-1"></i> {{ apiKeyMessage }}
         </span>
-        <p class="text-muted-cool mt-2 mb-0">
-          <i class="bi bi-shield-lock me-1"></i>
-          Your API key is stored locally and never sent to the server.
-        </p>
       </div>
-      <button class="btn btn-outline-danger rounded-pill px-4" (click)="onClearApiKey()">
-        <i class="bi bi-trash3 me-1"></i> Clear API Key
+      <button class="btn btn-outline-ocean rounded-pill px-4" (click)="onValidateKey()" [disabled]="validating">
+        <i class="bi bi-shield-check me-1"></i> {{ validating ? 'Validating...' : 'Validate Key' }}
       </button>
     </div>
 
-    <div *ngIf="!hasApiKey">
+    <div *ngIf="!apiKeyConfigured">
       <div class="alert alert-ocean">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        No API key stored. Go to <a routerLink="/build" class="fw-bold">Build Model</a> to add one.
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ apiKeyMessage }}
       </div>
     </div>
 
-    <div *ngIf="clearConfirm" class="alert alert-warning mt-3">
-      <i class="bi bi-check-circle me-1"></i> API key cleared successfully.
+    <div *ngIf="apiKeyValid === true" class="alert alert-success mt-3">
+      <i class="bi bi-check-circle me-1"></i> API key is valid and working.
+    </div>
+    <div *ngIf="apiKeyValid === false" class="alert alert-danger mt-3">
+      <i class="bi bi-x-circle me-1"></i> API key validation failed. Check the key in your server <code>.env</code> file.
     </div>
   </div>
 
   <div class="settings-card p-4 mt-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill me-2 text-sky"></i>About Storage</h5>
+    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill me-2 text-sky"></i>About Configuration</h5>
     <p class="text-muted-cool mb-0">
-      All sensitive data (API keys) is stored in your browser's <strong>localStorage</strong> only.
-      It is never transmitted to the backend server. Clearing your browser data will remove stored keys.
+      The YouTube API key is stored on the server in the <strong><code>.env</code></strong> file.
+      It is never stored in or transmitted to the browser. To update the key, edit the
+      <code>.env</code> file on the server and restart the backend.
     </p>
   </div>
 </div>

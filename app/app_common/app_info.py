@@ -1,4 +1,4 @@
-from app.dtos.init_dtos import InitDTO
+from app.app_common.dtos.init_dtos import InitDTO
 
 
 class AppInfo:

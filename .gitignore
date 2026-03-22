@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Logs
+logs/
+
 # C extensions
 *.so
 
@@ -137,6 +140,9 @@ celerybeat.pid
 # Environments
 .env
 .envrc
+
+# SQLite databases
+*.db
 .venv
 env/
 venv/

@@ -75,6 +75,21 @@ class ModelLocationResolver:
     def _resolve_local(self, latest_path: str) -> ModelLocationDTO:
         latest = Path(latest_path)
         releases_dir = latest.parent  # .../Releases
+
+        # Fast exit: if the releases directory itself doesn't exist, skip all scanning
+        if not releases_dir.exists():
+            return ModelLocationDTO(
+                storage_type=ModelStorageType.LOCAL,
+                uri=latest_path,
+                path=latest_path,
+                exists=False,
+                extra={
+                    "message": "No models directory found. Build your first model to get started.",
+                    "available_versions": [],
+                    "available_version_count": 0,
+                },
+            )
+
         available_versions = self._list_available_versions(releases_dir)
         latest_exists = latest.exists()
 

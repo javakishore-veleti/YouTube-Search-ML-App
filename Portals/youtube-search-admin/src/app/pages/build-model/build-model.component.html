@@ -1,29 +1,40 @@
 <div class="build-container p-4">
   <h2 class="fw-bold mb-1"><i class="bi bi-hammer me-2 text-ocean"></i>Build Model</h2>
-  <p class="text-muted-cool mb-4">Select an ML approach, configure your API key, and build a model.</p>
+  <p class="text-muted-cool mb-4">Configure, search videos, select training data, and build.</p>
 
-  <div class="build-card p-4 mb-4">
-    <!-- API Key (stored in browser only) -->
-    <div class="mb-4">
-      <label class="form-label fw-semibold"><i class="bi bi-key-fill me-1 text-sky"></i> YouTube API Key</label>
-      <div class="input-group">
-        <input
-          type="password"
-          class="form-control custom-input"
-          placeholder="Enter your YouTube Data API v3 key"
-          [(ngModel)]="apiKey"
-        />
-        <button class="btn btn-ocean rounded-end" (click)="onSaveApiKey()">
-          <i class="bi bi-save me-1"></i> Save to Browser
-        </button>
+  <!-- Step Indicator -->
+  <div class="step-indicator d-flex mb-4">
+    <div class="step-item" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+      <span class="step-num">1</span><span class="step-label">Configure</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep > 1"></div>
+    <div class="step-item" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+      <span class="step-num">2</span><span class="step-label">Select Videos</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep > 2"></div>
+    <div class="step-item" [class.active]="currentStep >= 3">
+      <span class="step-num">3</span><span class="step-label">Build</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ STEP 1: Configure ═══════════════════ -->
+  <div *ngIf="currentStep === 1" class="build-card p-4">
+    <!-- API Key Status — appears when loaded, form is usable immediately -->
+    <div class="mb-4" *ngIf="apiKeyLoaded">
+      <div *ngIf="apiKeyConfigured">
+        <span class="badge bg-success-soft text-success px-3 py-2 rounded-pill">
+          <i class="bi bi-check-circle-fill me-1"></i> {{ apiKeyMessage }}
+        </span>
       </div>
-      <small class="text-muted-cool mt-1 d-block">
-        <i class="bi bi-shield-lock me-1"></i>
-        Stored in your browser only. Never sent to the backend.
-      </small>
-      <span *ngIf="hasStoredKey" class="badge bg-success-soft text-success mt-2">
-        <i class="bi bi-check-circle me-1"></i>API key saved
-      </span>
+      <div *ngIf="!apiKeyConfigured" class="alert alert-ocean mb-0">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ apiKeyMessage }}
+      </div>
+    </div>
+
+    <!-- Model Name -->
+    <div class="mb-4">
+      <label class="form-label fw-semibold"><i class="bi bi-tag-fill me-1 text-sky"></i> Model Name</label>
+      <input type="text" class="form-control custom-input" placeholder="e.g. YouTube Semantic Search v1" [(ngModel)]="modelName" />
     </div>
 
     <!-- Approach Dropdown -->
@@ -35,17 +46,168 @@
       </select>
     </div>
 
-    <!-- Approach Cards -->
-    <div *ngIf="selectedApproach" class="approach-detail mb-4 p-3">
-      <div *ngFor="let a of approaches">
-        <div *ngIf="a.id === selectedApproach" class="d-flex align-items-center">
-          <i class="bi {{ a.icon }} fs-2 text-ocean me-3"></i>
-          <div>
-            <h6 class="fw-bold mb-0">{{ a.name }}</h6>
-            <small class="text-muted-cool">Selected approach for model building</small>
-          </div>
+    <button class="btn btn-ocean btn-lg rounded-pill px-5" (click)="goToStep2()" [disabled]="!modelName.trim() || !selectedApproach || !apiKeyConfigured">
+      Next: Search Videos <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+
+  <!-- ═══════════════════ STEP 2: Search & Select Videos ═══════════════════ -->
+  <div *ngIf="currentStep === 2" class="build-card p-4">
+    <button class="btn btn-link text-ocean p-0 mb-3" (click)="goBack(1)">
+      <i class="bi bi-arrow-left me-1"></i> Back to Configure
+    </button>
+
+    <!-- Search Bar -->
+    <div class="row g-3 mb-4 align-items-end">
+      <div class="col-md-9">
+        <label class="form-label fw-semibold"><i class="bi bi-youtube me-1 text-danger"></i> Search YouTube Videos</label>
+        <input type="text" class="form-control custom-input" placeholder="e.g. machine learning tutorials" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()" [disabled]="isSearching" />
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-ocean w-100 rounded-pill" (click)="onSearch()" [disabled]="isSearching || !searchQuery.trim()">
+          <span *ngIf="!isSearching"><i class="bi bi-search me-1"></i> Search</span>
+          <span *ngIf="isSearching"><i class="bi bi-arrow-repeat spin me-1"></i> Searching...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toggle Filters -->
+    <button class="btn btn-link text-ocean p-0 mb-3 fw-semibold" (click)="toggleFilters()">
+      <i class="bi me-1" [ngClass]="showFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      {{ showFilters ? 'Hide' : 'Show' }} Advanced Filters
+      <span class="badge bg-ocean-light text-ocean ms-1" *ngIf="publishedAfter || publishedBefore || channelLink || searchTags">Active</span>
+    </button>
+
+    <!-- Optional Filters Panel -->
+    <div *ngIf="showFilters" class="filters-panel p-3 mb-4">
+      <div class="row g-3">
+        <!-- Published After -->
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">
+            <i class="bi bi-calendar-event me-1 text-sky"></i> Published After
+          </label>
+          <input type="date" class="form-control custom-input" [(ngModel)]="publishedAfter" [disabled]="isSearching" />
+        </div>
+        <!-- Published Before -->
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">
+            <i class="bi bi-calendar-check me-1 text-sky"></i> Published Before
+          </label>
+          <input type="date" class="form-control custom-input" [(ngModel)]="publishedBefore" [disabled]="isSearching" />
+        </div>
+        <!-- Channel Link -->
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">
+            <i class="bi bi-person-video3 me-1 text-sky"></i> Channel Link / ID
+          </label>
+          <input type="text" class="form-control custom-input" placeholder="youtube.com/channel/UC... or UCxxxx" [(ngModel)]="channelLink" [disabled]="isSearching" />
+        </div>
+        <!-- Tags -->
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">
+            <i class="bi bi-tags-fill me-1 text-sky"></i> Tags
+          </label>
+          <input type="text" class="form-control custom-input" placeholder="python, ML, tutorial" [(ngModel)]="searchTags" [disabled]="isSearching" />
         </div>
       </div>
+      <small class="text-muted-cool d-block mt-2">
+        <i class="bi bi-info-circle me-1"></i>All filters are optional. Tags are appended to the search query. Channel accepts a full YouTube URL or raw channel ID (UCxxxx).
+      </small>
+    </div>
+
+    <!-- Selection Counter -->
+    <div class="selection-bar d-flex justify-content-between align-items-center mb-3" *ngIf="allVideos.length > 0">
+      <span class="fw-semibold">
+        <i class="bi bi-check2-square me-1 text-ocean"></i>
+        {{ selectionCount }} / {{ maxSelections }} videos selected
+      </span>
+      <span class="text-muted-cool small">Page {{ currentPage }} of {{ totalPages }} ({{ allVideos.length }} results)</span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isSearching" class="text-center py-4">
+      <div class="spinner-border text-ocean" role="status"></div>
+      <p class="mt-2 text-muted-cool">Searching YouTube for "<strong>{{ searchQuery }}</strong>"...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="searchError" class="alert alert-danger">{{ searchError }}</div>
+
+    <!-- Video List -->
+    <div *ngIf="!isSearching && allVideos.length > 0">
+      <div *ngFor="let v of pagedVideos" class="video-row d-flex align-items-center p-3 mb-2" [class.selected]="isSelected(v.video_id)">
+        <input type="checkbox" class="form-check-input me-3 video-checkbox" [checked]="isSelected(v.video_id)" (change)="toggleSelection(v)"
+          [disabled]="!isSelected(v.video_id) && selectionCount >= maxSelections" />
+        <img [src]="v.thumbnail" [alt]="v.title" class="video-thumb me-3" />
+        <div class="flex-grow-1">
+          <h6 class="fw-bold mb-1 video-title">{{ v.title }}</h6>
+          <small class="text-sky"><i class="bi bi-person-fill me-1"></i>{{ v.channel }}</small>
+          <p class="text-muted-cool small mb-0 mt-1 video-desc">{{ v.description }}</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <nav class="mt-4 d-flex justify-content-center">
+        <ul class="pagination pagination-ocean">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" (click)="goToPage(currentPage - 1)"><i class="bi bi-chevron-left"></i></a>
+          </li>
+          <li *ngFor="let p of pageNumbers" class="page-item" [class.active]="p === currentPage">
+            <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" (click)="goToPage(currentPage + 1)"><i class="bi bi-chevron-right"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Next Button -->
+    <div class="mt-4" *ngIf="selectionCount > 0">
+      <button class="btn btn-ocean btn-lg rounded-pill px-5" (click)="goToStep3()">
+        Next: Confirm &amp; Build ({{ selectionCount }} videos) <i class="bi bi-arrow-right ms-2"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ STEP 3: Confirm & Build ═══════════════════ -->
+  <div *ngIf="currentStep === 3" class="build-card p-4">
+    <button class="btn btn-link text-ocean p-0 mb-3" (click)="goBack(2)">
+      <i class="bi bi-arrow-left me-1"></i> Back to Video Selection
+    </button>
+
+    <h5 class="fw-bold mb-3"><i class="bi bi-clipboard-check me-2 text-ocean"></i>Review &amp; Build</h5>
+
+    <div class="summary-card p-3 mb-3">
+      <p><strong>Model Name:</strong> {{ modelName }}</p>
+      <p><strong>Approach:</strong> {{ selectedApproach }}</p>
+      <p><strong>Videos Selected:</strong> {{ selectionCount }}</p>
+    </div>
+
+    <!-- Selected Videos Preview -->
+    <div class="selected-list mb-4">
+      <div *ngFor="let v of selectedVideos; let i = index" class="d-flex align-items-center p-2 selected-row">
+        <span class="badge bg-ocean text-white me-3">{{ i + 1 }}</span>
+        <img [src]="v.thumbnail" [alt]="v.title" class="selected-thumb me-3" />
+        <div>
+          <strong class="small">{{ v.title }}</strong>
+          <br /><small class="text-muted-cool">{{ v.channel }}</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Notes (user-facing) -->
+    <div class="mb-4">
+      <label class="form-label fw-semibold"><i class="bi bi-journal-text me-1 text-sky"></i> Additional Notes</label>
+      <textarea class="form-control custom-input" rows="3" placeholder="Add any notes about this model build (purpose, observations, etc.)" [(ngModel)]="additionalNotes"></textarea>
+      <small class="text-muted-cool">For your reference only.</small>
+    </div>
+
+    <!-- Additional Context Data (for model improvement) -->
+    <div class="mb-4">
+      <label class="form-label fw-semibold"><i class="bi bi-braces me-1 text-sky"></i> Additional Context Data</label>
+      <textarea class="form-control custom-input" rows="3" placeholder='{"domain": "tech", "language": "en"}' [(ngModel)]="additionalContextData"></textarea>
+      <small class="text-muted-cool">JSON data passed to the model builder for improvement. Leave empty if not needed.</small>
     </div>
 
     <!-- Publish Toggle -->
@@ -56,14 +218,10 @@
       </label>
     </div>
 
-    <!-- Build Button -->
-    <button
-      class="btn btn-ocean btn-lg rounded-pill px-5"
-      (click)="onBuild()"
-      [disabled]="isBuilding || !selectedApproach || !hasStoredKey"
-    >
-      <i class="bi me-2" [ngClass]="isBuilding ? 'bi-arrow-repeat spin' : 'bi-rocket-takeoff-fill'"></i>
-      {{ isBuilding ? 'Building...' : 'Build Model' }}
+    <!-- Submit to Queue -->
+    <button class="btn btn-ocean btn-lg rounded-pill px-5" (click)="onBuild()" [disabled]="isBuilding">
+      <i class="bi me-2" [ngClass]="isBuilding ? 'bi-arrow-repeat spin' : 'bi-send-fill'"></i>
+      {{ isBuilding ? 'Submitting...' : 'Submit to Build Queue' }}
     </button>
 
     <!-- Result -->

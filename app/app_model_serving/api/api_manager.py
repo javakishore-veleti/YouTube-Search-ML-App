@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-__api_manager_instance = None
+_api_manager_instance = None
 
 class ApiManager:
     def __init__(self):
@@ -18,26 +18,18 @@ class ApiManager:
 
     @staticmethod
     def initialize_app() -> FastAPI:
-        api_manager_instance:ApiManager = None
-        if __api_manager_instance is None:
-            global __api_manager_instance
-            __api_manager_instance = ApiManager()
-            api_manager_instance = __api_manager_instance
-        else:
-            api_manager_instance = __api_manager_instance
+        global _api_manager_instance
+        if _api_manager_instance is None:
+            _api_manager_instance = ApiManager()
 
         app = FastAPI()
-        api_manager_instance.app = app
+        _api_manager_instance.app = app
         return app
 
     @staticmethod
     def get_flask_app() -> FastAPI:
-        api_manager_instance:ApiManager = None
-        if __api_manager_instance is None:
-            global __api_manager_instance
-            __api_manager_instance = ApiManager()
-            api_manager_instance = __api_manager_instance
-        else:
-            api_manager_instance = __api_manager_instance
+        global _api_manager_instance
+        if _api_manager_instance is None:
+            _api_manager_instance = ApiManager()
 
-        return api_manager_instance.app
+        return _api_manager_instance.app
