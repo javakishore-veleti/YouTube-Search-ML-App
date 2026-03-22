@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-logger = logging.getLogger("app.yt_client")
+logger = logging.getLogger(__name__)
 
 
 class YouTubeClient:

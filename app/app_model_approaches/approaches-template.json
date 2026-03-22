@@ -1,0 +1,58 @@
+[
+  {
+    "id": "classical_ml",
+    "name": "Classical ML (scikit-learn)",
+    "package": "approach_01",
+    "sub_models": {
+      "selection_mode": "single",
+      "options": [
+        { "id": "tfidf-svd", "name": "TF-IDF + SVD" },
+        { "id": "word2vec", "name": "Word2Vec" },
+        { "id": "fasttext", "name": "FastText" }
+      ]
+    }
+  },
+  {
+    "id": "pytorch",
+    "name": "PyTorch",
+    "package": "approach_02",
+    "sub_models": {
+      "selection_mode": "multiple",
+      "options": [
+        { "id": "bert-base", "name": "BERT Base" },
+        { "id": "distilbert", "name": "DistilBERT" },
+        { "id": "sentence-transformer", "name": "Sentence Transformer" }
+      ]
+    }
+  },
+  {
+    "id": "tensorflow",
+    "name": "TensorFlow / Keras",
+    "package": "approach_03",
+    "sub_models": {
+      "selection_mode": "single",
+      "options": [
+        { "id": "universal-sentence-encoder", "name": "Universal Sentence Encoder" },
+        { "id": "keras-embedding", "name": "Keras Embedding" }
+      ]
+    }
+  },
+  {
+    "id": "sagemaker",
+    "name": "AWS SageMaker",
+    "package": "approach_04"
+  },
+  {
+    "id": "llm",
+    "name": "Large Language Model (LLM)",
+    "package": "approach_05",
+    "sub_models": {
+      "selection_mode": "multiple",
+      "options": [
+        { "id": "gpt-style", "name": "GPT-style" },
+        { "id": "mistral-style", "name": "Mistral-style" },
+        { "id": "embedding-llm", "name": "Embedding LLM" }
+      ]
+    }
+  }
+]

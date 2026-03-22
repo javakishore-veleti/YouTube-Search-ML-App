@@ -44,6 +44,11 @@ else
   pip install -r requirements.txt --quiet
 fi
 
+# ── DB migrations ─────────────────────────────────────────────────────────────
+info "Running database migrations (alembic upgrade head)..."
+alembic upgrade head
+log "Database migrations applied."
+
 uvicorn app.main:app \
   --host 0.0.0.0 \
   --port "$API_PORT" \

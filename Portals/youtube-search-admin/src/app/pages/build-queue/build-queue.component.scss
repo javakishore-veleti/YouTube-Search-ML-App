@@ -1,6 +1,83 @@
-.queue-container { max-width: 1100px; margin: 0 auto; }
-.card { border-radius: 12px; border: 1px solid #e0e8ed; }
+:host { display: block; }
+
+.text-ocean { color: #0077b6 !important; }
+
+/* ── Table ── */
+.queue-table {
+  th {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .05em;
+    color: #6c8a99; font-weight: 700; border-bottom: 2px solid #e3eaf0;
+    white-space: nowrap; padding: .6rem .75rem;
+  }
+  td { vertical-align: middle; padding: .65rem .75rem; }
+}
+
+.queue-row {
+  cursor: pointer;
+  transition: background .12s;
+  &:hover { background: #f0f7fb; }
+  &:hover .bi-chevron-right { color: #0077b6 !important; }
+}
+
+/* Column widths */
+.col-id       { width: 56px; }
+.col-name     { min-width: 180px; max-width: 280px; }
+.col-approach { width: 110px; }
+.col-videos   { width: 80px; }
+.col-status   { width: 140px; }
+.col-created, .col-completed { width: 120px; }
+.col-action   { width: 36px; }
+
+.model-name-cell { max-width: 260px; }
+
+/* Approach UUID chip */
+.approach-id {
+  font-size: .72rem; background: #f0f7fb;
+  padding: 2px 7px; border-radius: 4px; color: #4a6fa5;
+}
+
+/* Video count */
+.vid-count { font-size: .8rem; color: #495057; }
+
+/* Status pills */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 10px; border-radius: 99px; font-size: .75rem; font-weight: 600;
+  white-space: nowrap;
+}
+.badge-pending   { background: #fff3cd; color: #856404; }
+.badge-running   { background: #cfe2ff; color: #084298; }
+.badge-done      { background: #d1e7dd; color: #0f5132; }
+.badge-fail      { background: #f8d7da; color: #842029; }
+.badge-secondary { background: #e2e3e5; color: #41464b; }
+
+/* Latest badge */
+.badge-latest { background: #0dcaf0; color: #000; font-size: .65rem; }
+
+.text-muted-xs { font-size: .7rem; color: #adb5bd; }
+
+/* Skeleton */
+.skeleton-row {
+  height: 44px; border-radius: 6px;
+  background: linear-gradient(90deg,#e8f0f5 25%,#f5f9fc 50%,#e8f0f5 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 280px; text-align: center;
+}
+
+/* Spin for in-progress */
+.spin { animation: spin 1.2s linear infinite; }
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+/* Card */
+.card { border: 1px solid #e3eaf0; border-radius: 10px; }
+.card-header { background: #f8fbfd; border-bottom: 1px solid #e3eaf0; border-radius: 10px 10px 0 0; }
+.card-footer { background: #f8fbfd; border-top: 1px solid #e3eaf0; border-radius: 0 0 10px 10px; }
 .page-link { cursor: pointer; }
 .page-item.active .page-link { background: #1B4965; border-color: #1B4965; }
-.table th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b8a99; border-bottom: 2px solid #d1e7f0; }
-.table td { vertical-align: middle; }

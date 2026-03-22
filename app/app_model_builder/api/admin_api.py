@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -12,7 +13,7 @@ from app.app_common.dtos.init_dtos import InitDTO
 from app.app_integrators.youtube.yt_client import YouTubeClient
 from app.app_model_approaches import load_approaches
 
-logger = logging.getLogger("app.admin_api")
+logger = logging.getLogger(__name__)
 
 
 class AdminAPI:
@@ -159,6 +160,46 @@ class AdminAPI:
         finally:
             session.close()
 
+    def get_model(self, request: Request) -> dict:
+        model_id = int(request.path_params["model_id"])
+        session = SessionLocal()
+        try:
+            repo = ModelRepository(session)
+            record = repo.get_model(model_id)
+            if not record:
+                return {"error": "Model not found"}
+            versions = repo.get_versions(model_id)
+            requests_list = repo.get_requests(model_id)
+
+            # Collect all videos from all request resources (deduplicated by video_id)
+            seen_ids: set = set()
+            videos = []
+            for req in requests_list:
+                resources = repo.get_request_resources(req.id)
+                for res in resources:
+                    vid_id = res.resource_type_id
+                    if vid_id not in seen_ids:
+                        seen_ids.add(vid_id)
+                        meta = json.loads(res.resource_metadata_json or "{}")
+                        videos.append({
+                            "video_id": vid_id,
+                            "title": meta.get("title", ""),
+                            "channel": meta.get("channel", ""),
+                            "thumbnail": meta.get("thumbnail", ""),
+                            "description": meta.get("description", ""),
+                            "url": meta.get("url", f"https://youtube.com/watch?v={vid_id}"),
+                        })
+
+            result = record.to_dict()
+            # Remove noisy input_criteria (just video_count) — replaced by real videos list
+            result.pop("input_criteria", None)
+            result["versions"] = [v.to_dict() for v in versions]
+            result["videos"] = videos
+            result["video_count"] = len(videos)
+            return result
+        finally:
+            session.close()
+
     async def search_videos(self, request: Request) -> dict:
         """Search YouTube videos with optional date range, channel, and tags."""
         t0 = time.time()
@@ -265,18 +306,19 @@ class AdminAPI:
             session.close()
 
 
-def initialize(dto: InitDTO) -> None:
-    handler = AdminAPI()
-    app = dto.app
-
-    app.add_api_route("/admin/dashboard", endpoint=handler.dashboard, methods=["GET"])
-    app.add_api_route("/admin/status", endpoint=handler.app_status, methods=["GET"])
-    app.add_api_route("/admin/activities", endpoint=handler.list_activities, methods=["GET"])
-    app.add_api_route("/admin/api-key/status", endpoint=handler.api_key_status, methods=["GET"])
-    app.add_api_route("/admin/api-key/validate", endpoint=handler.validate_key, methods=["GET"])
-    app.add_api_route("/admin/approaches", endpoint=handler.list_approaches, methods=["GET"])
-    app.add_api_route("/admin/models", endpoint=handler.list_models, methods=["GET"])
-    app.add_api_route("/admin/models/build", endpoint=handler.create_model, methods=["POST"])
-    app.add_api_route("/admin/models/build-request", endpoint=handler.submit_build_request, methods=["POST"])
-    app.add_api_route("/admin/models/{model_id}/versions", endpoint=handler.get_model_versions, methods=["GET"])
-    app.add_api_route("/admin/videos/search", endpoint=handler.search_videos, methods=["POST"])
+class Initializer:
+    def initialize(self, dto: InitDTO) -> None:
+        handler = AdminAPI()
+        app = dto.app
+        app.add_api_route("/admin/dashboard", endpoint=handler.dashboard, methods=["GET"])
+        app.add_api_route("/admin/status", endpoint=handler.app_status, methods=["GET"])
+        app.add_api_route("/admin/activities", endpoint=handler.list_activities, methods=["GET"])
+        app.add_api_route("/admin/api-key/status", endpoint=handler.api_key_status, methods=["GET"])
+        app.add_api_route("/admin/api-key/validate", endpoint=handler.validate_key, methods=["GET"])
+        app.add_api_route("/admin/approaches", endpoint=handler.list_approaches, methods=["GET"])
+        app.add_api_route("/admin/models", endpoint=handler.list_models, methods=["GET"])
+        app.add_api_route("/admin/models/build", endpoint=handler.create_model, methods=["POST"])
+        app.add_api_route("/admin/models/build-request", endpoint=handler.submit_build_request, methods=["POST"])
+        app.add_api_route("/admin/models/{model_id}", endpoint=handler.get_model, methods=["GET"])
+        app.add_api_route("/admin/models/{model_id}/versions", endpoint=handler.get_model_versions, methods=["GET"])
+        app.add_api_route("/admin/videos/search", endpoint=handler.search_videos, methods=["POST"])

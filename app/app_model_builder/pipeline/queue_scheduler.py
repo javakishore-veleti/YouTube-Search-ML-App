@@ -1,95 +1,153 @@
+"""
+queue_scheduler.py
+==================
+QueueScheduler runs a background daemon thread that polls the build queue
+and processes pending items one at a time.  All logic is encapsulated in
+the class; call QueueScheduler.instance().start() once at app startup.
+"""
+from __future__ import annotations
+
 import json
 import logging
 import threading
 import time
-from datetime import datetime, timezone
+from typing import Optional
 
 from app.app_common.database.db_engine import SessionLocal
 from app.app_common.database.db_repo import ActivityRepository, ModelRepository, QueueRepository
 
-logger = logging.getLogger("app.queue_scheduler")
-
-POLL_INTERVAL = 10  # seconds
+logger = logging.getLogger(__name__)
 
 
-def _process_queue_item(item) -> None:
-    """Process a single queue item — create model record, request, version."""
-    session = SessionLocal()
-    try:
-        repo = ModelRepository(session)
-        videos = json.loads(item.selected_videos or "[]")
+class QueueScheduler:
+    """
+    Singleton background scheduler that processes the model build queue.
 
-        record = repo.create_model(
-            model_name=item.model_name,
-            approach_type=item.approach_type,
-            user_id=item.user_id,
-            input_criteria={"video_count": len(videos), "context_data": json.loads(item.context_data or "{}")},
+    Usage
+    -----
+      QueueScheduler.instance().start()
+    """
+
+    POLL_INTERVAL = 10   # seconds between queue polls
+
+    _instance: Optional["QueueScheduler"] = None
+    _initialised: bool = False
+
+    def __new__(cls) -> "QueueScheduler":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self) -> None:
+        if self._initialised:
+            return
+        self._initialised = True
+        self._thread: Optional[threading.Thread] = None
+
+    @classmethod
+    def instance(cls) -> "QueueScheduler":
+        return cls()
+
+    # ── Public API ───────────────────────────────────────────────────────────
+
+    def start(self) -> None:
+        """Start the daemon thread.  Safe to call multiple times — starts only once."""
+        if self._thread and self._thread.is_alive():
+            return
+        self._thread = threading.Thread(
+            target=self._loop, daemon=True, name="queue-scheduler"
         )
+        self._thread.start()
+        logger.info("Queue scheduler thread started")
 
-        resources = []
-        for video in videos:
-            resources.append({
-                "resource_type": "youtube",
-                "resource_type_id": video.get("video_id", ""),
-                "metadata": {
-                    "url": f"https://www.youtube.com/watch?v={video.get('video_id', '')}",
-                    "title": video.get("title", ""),
-                    "channel": video.get("channel", ""),
-                    "thumbnail": video.get("thumbnail", ""),
-                    "description": video.get("description", ""),
-                },
-            })
+    # ── Private loop ─────────────────────────────────────────────────────────
 
-        repo.create_request(model_id=record.id, resources=resources)
-        repo.create_version(
-            model_id=record.id,
-            version=record.latest_version,
-            input_criteria={"video_count": len(videos)},
-            model_location="",
-        )
-
-        logger.info(f"Queue item #{item.id} processed — model '{item.model_name}' created (id={record.id})")
-    finally:
-        session.close()
-
-
-def _scheduler_loop() -> None:
-    """Background loop: pick pending items one at a time and process them."""
-    logger.info("Queue scheduler started (poll every %ds)", POLL_INTERVAL)
-    while True:
-        try:
-            session = SessionLocal()
+    def _loop(self) -> None:
+        logger.info("Queue scheduler started (poll every %ds)", self.POLL_INTERVAL)
+        while True:
             try:
-                q_repo = QueueRepository(session)
-                item = q_repo.pick_next_pending()
-                if item:
-                    logger.info(f"Processing queue item #{item.id}: '{item.model_name}'")
-                    try:
-                        _process_queue_item(item)
-                        q_repo.mark_completed(item.id)
-                        # Log activity
-                        ActivityRepository(session).add(
-                            name=f"Model '{item.model_name}' built from queue (#{item.id})",
-                            status="success",
-                        )
-                        logger.info(f"Queue item #{item.id} completed")
-                    except Exception as e:
-                        logger.error(f"Queue item #{item.id} failed: {e}")
-                        q_repo.mark_failed(item.id, str(e))
-                        ActivityRepository(session).add(
-                            name=f"Model '{item.model_name}' build failed (#{item.id}): {e}",
-                            status="error",
-                        )
-            finally:
-                session.close()
-        except Exception as e:
-            logger.error(f"Queue scheduler error: {e}")
+                self._tick()
+            except Exception as e:
+                logger.error("Queue scheduler error: %s", e)
+            time.sleep(self.POLL_INTERVAL)
 
-        time.sleep(POLL_INTERVAL)
+    def _tick(self) -> None:
+        """Pick one pending queue item and process it."""
+        session = SessionLocal()
+        try:
+            q_repo = QueueRepository(session)
+            item = q_repo.pick_next_pending()
+            if not item:
+                return
+
+            logger.info("Processing queue item #%d: '%s'", item.id, item.model_name)
+            try:
+                self._process(item)
+                q_repo.mark_completed(item.id)
+                ActivityRepository(session).add(
+                    name=f"Model '{item.model_name}' built from queue (#{item.id})",
+                    status="success",
+                )
+                logger.info("Queue item #%d completed", item.id)
+            except Exception as e:
+                logger.error("Queue item #%d failed: %s", item.id, e)
+                q_repo.mark_failed(item.id, str(e))
+                ActivityRepository(session).add(
+                    name=f"Model '{item.model_name}' build failed (#{item.id}): {e}",
+                    status="error",
+                )
+        finally:
+            session.close()
+
+    def _process(self, item) -> None:
+        """Create the model record, request, and version for a queue item."""
+        session = SessionLocal()
+        try:
+            repo   = ModelRepository(session)
+            videos = json.loads(item.selected_videos or "[]")
+
+            record = repo.create_model(
+                model_name=item.model_name,
+                approach_type=item.approach_type,
+                user_id=item.user_id,
+                input_criteria={
+                    "video_count":  len(videos),
+                    "context_data": json.loads(item.context_data or "{}"),
+                },
+            )
+
+            resources = [
+                {
+                    "resource_type":    "youtube",
+                    "resource_type_id": v.get("video_id", ""),
+                    "metadata": {
+                        "url":         f"https://www.youtube.com/watch?v={v.get('video_id', '')}",
+                        "title":       v.get("title", ""),
+                        "channel":     v.get("channel", ""),
+                        "thumbnail":   v.get("thumbnail", ""),
+                        "description": v.get("description", ""),
+                    },
+                }
+                for v in videos
+            ]
+
+            repo.create_request(model_id=record.id, resources=resources)
+            repo.create_version(
+                model_id=record.id,
+                version=record.latest_version,
+                input_criteria={"video_count": len(videos)},
+                model_location="",
+            )
+            logger.info(
+                "Queue item #%d processed — model '%s' created (id=%d)",
+                item.id, item.model_name, record.id,
+            )
+        finally:
+            session.close()
 
 
+# ---------------------------------------------------------------------------
+# Module-level shim — existing call site in main.py stays unchanged.
+# ---------------------------------------------------------------------------
 def start_scheduler() -> None:
-    """Start the queue scheduler in a daemon thread."""
-    t = threading.Thread(target=_scheduler_loop, daemon=True, name="queue-scheduler")
-    t.start()
-    logger.info("Queue scheduler thread started")
+    QueueScheduler.instance().start()

@@ -1,7 +1,75 @@
 [
-  {"id": "classical_ml", "name": "Classical ML (scikit-learn)", "package": "approach_01"},
-  {"id": "pytorch",      "name": "PyTorch",                    "package": "approach_02"},
-  {"id": "tensorflow",   "name": "TensorFlow / Keras",         "package": "approach_03"},
-  {"id": "sagemaker",    "name": "AWS SageMaker",              "package": "approach_04"},
-  {"id": "llm",          "name": "Large Language Model (LLM)", "package": "approach_05"}
+  {
+    "id": "e1cffc4f-d00d-4b04-b705-18eef34e10d2",
+    "name": "Approach 01 – Building Custom Embedding Model",
+    "package": "approach_01",
+    "category": "Embedding Models",
+    "description": "Builds a custom embedding model by fetching YouTube video transcripts and fine-tuning a SentenceTransformer base model.",
+    "sub_models": {
+      "selection_mode": "single",
+      "options": [
+        {
+          "id": "5f96a19d-6066-468f-bb30-112159cb49a6",
+          "name": "paraphrase-multilingual-MiniLM-L12-v2",
+          "description": "Maps sentences & paragraphs to a 384-dimensional dense vector space. Multilingual.",
+          "embedding_dim": 384
+        },
+        {
+          "id": "7ae50b73-33a7-4586-a98d-8b49e469dafa",
+          "name": "all-MiniLM-L12-v2",
+          "description": "Maps sentences & paragraphs to a 384-dimensional dense vector space.",
+          "embedding_dim": 384
+        },
+        {
+          "id": "39b9a4c4-f61a-402a-a9fa-590b98e3794b",
+          "name": "all-mpnet-base-v1",
+          "description": "Maps sentences & paragraphs to a 768-dimensional dense vector space.",
+          "embedding_dim": 768
+        }
+      ]
+    }
+  },
+  {
+    "id": "pytorch",
+    "name": "PyTorch",
+    "package": "approach_02",
+    "sub_models": {
+      "selection_mode": "multiple",
+      "options": [
+        { "id": "bert-base", "name": "BERT Base" },
+        { "id": "distilbert", "name": "DistilBERT" },
+        { "id": "sentence-transformer", "name": "Sentence Transformer" }
+      ]
+    }
+  },
+  {
+    "id": "tensorflow",
+    "name": "TensorFlow / Keras",
+    "package": "approach_03",
+    "sub_models": {
+      "selection_mode": "single",
+      "options": [
+        { "id": "universal-sentence-encoder", "name": "Universal Sentence Encoder" },
+        { "id": "keras-embedding", "name": "Keras Embedding" }
+      ]
+    }
+  },
+  {
+    "id": "sagemaker",
+    "name": "AWS SageMaker",
+    "package": "approach_04"
+  },
+  {
+    "id": "llm",
+    "name": "Large Language Model (LLM)",
+    "package": "approach_05",
+    "sub_models": {
+      "selection_mode": "multiple",
+      "options": [
+        { "id": "gpt-style", "name": "GPT-style" },
+        { "id": "mistral-style", "name": "Mistral-style" },
+        { "id": "embedding-llm", "name": "Embedding LLM" }
+      ]
+    }
+  }
 ]

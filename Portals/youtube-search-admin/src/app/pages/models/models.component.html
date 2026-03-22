@@ -1,0 +1,93 @@
+<div class="models-page p-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-cpu me-2 text-ocean"></i>Models</h2>
+      <p class="text-muted mb-0 small">Click any row to view full model details and versions.</p>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded" class="card shadow-sm">
+    <div class="card-body p-3">
+      <div *ngFor="let i of [1,2,3,4,5]" [attr.data-i]="i" class="skeleton-row mb-2"></div>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="loaded && models.length === 0" class="empty-state">
+    <i class="bi bi-cpu display-4 text-muted"></i>
+    <p class="fw-semibold mt-3 mb-1">No models yet</p>
+    <small class="text-muted">Build your first model from the Build Model page.</small>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="loaded && models.length > 0" class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+      <span class="fw-semibold small text-muted">{{ models.length }} model{{ models.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover models-table mb-0">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th class="col-name">Model Name</th>
+            <th class="col-approach">Approach</th>
+            <th class="col-version">Version</th>
+            <th class="col-owner">Owner</th>
+            <th class="col-created">Created</th>
+            <th class="col-updated">Updated</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of models; let i = index"
+              class="model-row"
+              (click)="openDetail(m.id)"
+              role="button"
+              title="View details">
+
+            <td class="col-id text-muted fw-semibold">#{{ m.id }}</td>
+
+            <td class="col-name">
+              <div class="fw-semibold text-truncate model-name-cell">{{ m.model_name }}</div>
+            </td>
+
+            <td class="col-approach">
+              <span class="badge approach-badge" [ngClass]="approachBadgeClass(m.model_approach_type)"
+                    [title]="m.model_approach_type">
+                {{ approachShort(m.model_approach_type) }}
+              </span>
+            </td>
+
+            <td class="col-version">
+              <span class="badge version-badge">v{{ m.latest_version }}</span>
+            </td>
+
+            <td class="col-owner text-muted small">{{ m.user_id }}</td>
+
+            <td class="col-created text-muted small">
+              {{ m.created_dt | date:'MMM d, y' }}<br>
+              <span class="text-muted-xs">{{ m.created_dt | date:'h:mm a' }}</span>
+            </td>
+
+            <td class="col-updated text-muted small">
+              <ng-container *ngIf="m.updated_dt; else noUpd">
+                {{ m.updated_dt | date:'MMM d, y' }}<br>
+                <span class="text-muted-xs">{{ m.updated_dt | date:'h:mm a' }}</span>
+              </ng-container>
+              <ng-template #noUpd><span class="text-muted-xs">—</span></ng-template>
+            </td>
+
+            <td class="col-action text-end">
+              <i class="bi bi-chevron-right text-muted"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

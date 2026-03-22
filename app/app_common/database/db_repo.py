@@ -15,11 +15,12 @@ class QueueRepository:
 
     def enqueue(self, model_name: str, approach_type: str, selected_videos: list,
                 notes: str = "", context_data: str = "{}", publish_as_latest: bool = False,
-                user_id: str = "default") -> ModelBuildQueue:
+                user_id: str = "default", selected_sub_models: Optional[list] = None) -> ModelBuildQueue:
         item = ModelBuildQueue(
             model_name=model_name,
             approach_type=approach_type,
             selected_videos=json.dumps(selected_videos),
+            selected_sub_models=json.dumps(selected_sub_models or []),
             notes=notes,
             context_data=context_data if context_data else "{}",
             publish_as_latest=publish_as_latest,

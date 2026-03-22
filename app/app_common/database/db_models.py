@@ -54,6 +54,8 @@ class ModelVersion(Base):
     input_criteria = Column(Text, default="{}")
     output_criteria = Column(Text, default="{}")
     model_location = Column(String(500), default="")
+    storage_type = Column(String(50), default="local")   # local | s3 | gcs | azure_blob | none
+    storage_path = Column(String(1000), default="")      # full physical path or cloud URI
     created_dt = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     model = relationship("ModelRecord", back_populates="versions")
@@ -66,6 +68,8 @@ class ModelVersion(Base):
             "input_criteria": json.loads(self.input_criteria or "{}"),
             "output_criteria": json.loads(self.output_criteria or "{}"),
             "model_location": self.model_location,
+            "storage_type": self.storage_type or "local",
+            "storage_path": self.storage_path or "",
             "created_dt": self.created_dt.isoformat() if self.created_dt else None,
         }
 
@@ -145,6 +149,7 @@ class ModelBuildQueue(Base):
     notes = Column(Text, default="")  # user-facing notes
     context_data = Column(Text, default="{}")  # JSON — extra context for model improvement
     selected_videos = Column(Text, default="[]")  # JSON — list of video dicts
+    selected_sub_models = Column(Text, default="[]")  # JSON — always stored as list of selected sub-model ids
     publish_as_latest = Column(Boolean, default=False)
     user_id = Column(String(100), nullable=False, default="default")
     created_dt = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
@@ -154,6 +159,7 @@ class ModelBuildQueue(Base):
     error_message = Column(Text, default="")
 
     def to_dict(self) -> dict:
+        videos = json.loads(self.selected_videos or "[]")
         return {
             "id": self.id,
             "model_name": self.model_name,
@@ -161,7 +167,9 @@ class ModelBuildQueue(Base):
             "status": self.status,
             "notes": self.notes or "",
             "context_data": json.loads(self.context_data or "{}"),
-            "selected_videos_count": len(json.loads(self.selected_videos or "[]")),
+            "selected_videos": videos,
+            "selected_videos_count": len(videos),
+            "selected_sub_models": json.loads(self.selected_sub_models or "[]"),
             "publish_as_latest": self.publish_as_latest,
             "user_id": self.user_id,
             "created_dt": self.created_dt.isoformat() if self.created_dt else None,
@@ -170,5 +178,4 @@ class ModelBuildQueue(Base):
             "completed_dt": self.completed_dt.isoformat() if self.completed_dt else None,
             "error_message": self.error_message or "",
         }
-
 

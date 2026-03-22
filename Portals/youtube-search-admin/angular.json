@@ -64,9 +64,11 @@
               "buildTarget": "youtube-search-admin:build:production"
             },
             "development": {
-              "buildTarget": "youtube-search-admin:build:development"
+              "buildTarget": "youtube-search-admin:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
+          "options": {},
           "defaultConfiguration": "development"
         },
         "test": {

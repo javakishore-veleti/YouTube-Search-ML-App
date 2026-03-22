@@ -6,10 +6,7 @@ class HealthCheck:
         return {"health_check": "OK"}
 
 
-def initialize(dto: InitDTO) -> None:
-    handler = HealthCheck()
-    dto.app.add_api_route(
-        "/health_check",
-        endpoint=handler.health_check,
-        methods=["GET"],
-    )
+class Initializer:
+    def initialize(self, dto: InitDTO) -> None:
+        handler = HealthCheck()
+        dto.app.add_api_route("/health_check", endpoint=handler.health_check, methods=["GET"])

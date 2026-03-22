@@ -17,6 +17,7 @@ export class BuildModelComponent implements OnInit {
   // Step 1: config
   approaches: any[] = [];
   selectedApproach = '';
+  selectedSubModels: string[] = [];
   modelName = '';
   apiKeyConfigured = false;
   apiKeyMessage = '';
@@ -131,7 +132,7 @@ export class BuildModelComponent implements OnInit {
   // ── Step navigation ─────────────────────────────────────────────────
 
   goToStep2(): void {
-    if (this.modelName.trim() && this.selectedApproach) {
+    if (this.canProceedFromStep1()) {
       this.currentStep = 2;
     }
   }
@@ -211,7 +212,8 @@ export class BuildModelComponent implements OnInit {
       publish_as_latest: this.publishAsLatest,
       selected_videos: this.selectedVideos,
       notes: this.additionalNotes.trim(),
-      context_data: this.additionalContextData.trim() || '{}'
+      context_data: this.additionalContextData.trim() || '{}',
+      selected_sub_models: this.selectedSubModels
     }).subscribe({
       next: (res) => {
         this.zone.run(() => {
@@ -232,5 +234,47 @@ export class BuildModelComponent implements OnInit {
         });
       }
     });
+  }
+
+  get selectedApproachConfig(): any | null {
+    return this.approaches.find(a => a.id === this.selectedApproach) || null;
+  }
+
+  get subModelConfig(): any | null {
+    return this.selectedApproachConfig?.sub_models || null;
+  }
+
+  get subModelOptions(): any[] {
+    return this.subModelConfig?.options || [];
+  }
+
+  get isMultiSubModel(): boolean {
+    return this.subModelConfig?.selection_mode === 'multiple';
+  }
+
+  onApproachChange(): void {
+    this.selectedSubModels = [];
+  }
+
+  toggleSubModel(optionId: string): void {
+    if (!this.isMultiSubModel) {
+      this.selectedSubModels = optionId ? [optionId] : [];
+      return;
+    }
+    if (this.selectedSubModels.includes(optionId)) {
+      this.selectedSubModels = this.selectedSubModels.filter(v => v !== optionId);
+    } else {
+      this.selectedSubModels = [...this.selectedSubModels, optionId];
+    }
+  }
+
+  isSubModelSelected(optionId: string): boolean {
+    return this.selectedSubModels.includes(optionId);
+  }
+
+  canProceedFromStep1(): boolean {
+    if (!this.modelName.trim() || !this.selectedApproach || !this.apiKeyConfigured) return false;
+    if (!this.subModelConfig) return true;
+    return this.selectedSubModels.length > 0;
   }
 }

@@ -7,7 +7,7 @@ from app.app_common.database.db_engine import SessionLocal
 from app.app_common.database.db_repo import QueueRepository
 from app.app_common.dtos.init_dtos import InitDTO
 
-logger = logging.getLogger("app.queue_api")
+logger = logging.getLogger(__name__)
 
 
 class QueueAPI:
@@ -43,6 +43,7 @@ class QueueAPI:
         model_name = body.get("model_name", "")
         approach_type = body.get("approach_type", "")
         selected_videos = body.get("selected_videos", [])
+        selected_sub_models = body.get("selected_sub_models", [])
         notes = body.get("notes", "")
         context_data = body.get("context_data", "{}")
         publish_as_latest = body.get("publish_as_latest", False)
@@ -53,6 +54,12 @@ class QueueAPI:
         if not selected_videos or len(selected_videos) > 25:
             return {"status": "error", "message": "Select between 1 and 25 videos."}
 
+        # Always normalize sub-models to list for backend simplicity
+        if selected_sub_models is None:
+            selected_sub_models = []
+        elif not isinstance(selected_sub_models, list):
+            selected_sub_models = [selected_sub_models]
+
         # Validate context_data is valid JSON
         if isinstance(context_data, str):
             try:
@@ -62,7 +69,7 @@ class QueueAPI:
         else:
             context_data = json.dumps(context_data)
 
-        logger.info(f"Queuing build: model='{model_name}' approach={approach_type} videos={len(selected_videos)}")
+        logger.info(f"Queuing build: model='{model_name}' approach={approach_type} videos={len(selected_videos)} sub_models={selected_sub_models}")
 
         session = SessionLocal()
         try:
@@ -71,6 +78,7 @@ class QueueAPI:
                 model_name=model_name,
                 approach_type=approach_type,
                 selected_videos=selected_videos,
+                selected_sub_models=selected_sub_models,
                 notes=notes,
                 context_data=context_data,
                 publish_as_latest=publish_as_latest,
@@ -81,10 +89,10 @@ class QueueAPI:
             session.close()
 
 
-def initialize(dto: InitDTO) -> None:
-    handler = QueueAPI()
-    app = dto.app
-
-    app.add_api_route("/admin/queue", endpoint=handler.list_queue, methods=["GET"])
-    app.add_api_route("/admin/queue/submit", endpoint=handler.submit_to_queue, methods=["POST"])
-    app.add_api_route("/admin/queue/{id}", endpoint=handler.get_queue_item, methods=["GET"])
+class Initializer:
+    def initialize(self, dto: InitDTO) -> None:
+        handler = QueueAPI()
+        app = dto.app
+        app.add_api_route("/admin/queue", endpoint=handler.list_queue, methods=["GET"])
+        app.add_api_route("/admin/queue/submit", endpoint=handler.submit_to_queue, methods=["POST"])
+        app.add_api_route("/admin/queue/{id}", endpoint=handler.get_queue_item, methods=["GET"])

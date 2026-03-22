@@ -1,0 +1,197 @@
+:host { display: block; }
+
+.detail-page { padding: 1.75rem; max-width: 1280px; }
+.text-ocean { color: #0077b6 !important; }
+
+/* ── Breadcrumb ── */
+.bc-link { color: #0077b6; text-decoration: none; font-size: .85rem;
+  &:hover { text-decoration: underline; } }
+.breadcrumb-item.active { font-size: .85rem; }
+.breadcrumb-item + .breadcrumb-item::before { color: #adb5bd; }
+
+/* ── Hero card ── */
+.hero-card { border: 1px solid #e3eaf0; border-radius: 14px; }
+
+.hero-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, #1B4965, #0077b6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #fff; flex-shrink: 0;
+}
+
+/* ── Badges ── */
+.version-badge { background: #e0f0ff; color: #024e87; font-size: .72rem; font-weight: 600; }
+.approach-badge { font-size: .68rem; font-weight: 600; }
+.bg-purple { background: #ede9fe; color: #5b21b6; }
+.bg-teal   { background: #d1fae5; color: #065f46; }
+.bg-indigo { background: #e0e7ff; color: #3730a3; }
+.bg-coral  { background: #ffe4e6; color: #9f1239; }
+.bg-slate  { background: #f1f5f9; color: #334155; }
+
+/* ── Cards ── */
+.card { border: 1px solid #e3eaf0; border-radius: 12px; }
+.section-header {
+  background: #f8fbfd; border-bottom: 1px solid #e3eaf0;
+  border-radius: 12px 12px 0 0;
+  font-size: .8rem; font-weight: 700; color: #3d5a72;
+  padding: .6rem 1rem;
+}
+
+/* ── Approach card ── */
+.approach-card { border-left: 4px solid #0077b6; }
+.approach-name { font-size: .95rem; color: #1B4965; }
+
+/* ── Sub-model card ── */
+.submodel-card {
+  background: #f0f7fb; border: 1px solid #cce3ef;
+  border-radius: 6px; padding: .35rem .6rem;
+  font-size: .78rem; line-height: 1.4;
+}
+
+/* ── Storage block (inside each version row) ── */
+.storage-block {
+  background: #f4f8fb;
+  border: 1px solid #daeaf3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.storage-row {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .3rem .75rem;
+  border-bottom: 1px solid #eaf2f8;
+  &:last-child { border-bottom: none; }
+}
+.storage-key {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6c8a99;
+  white-space: nowrap;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.storage-val {
+  font-size: .78rem;
+  color: #1b3a4b;
+  word-break: break-all;
+}
+.path-val {
+  font-size: .72rem;
+  color: #1b3a4b;
+  word-break: break-all;
+  &.text-muted { color: #adb5bd !important; font-style: italic; }
+}
+
+/* ── Video list ── */
+.video-list { }
+.video-row {
+  border-bottom: 1px solid #f0f5f8;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #f8fbfd; }
+}
+
+.row-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #e8f0f5; color: #5a7a8a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 700; flex-shrink: 0;
+}
+
+.thumb-wrap {
+  width: 120px; flex-shrink: 0; border-radius: 6px; overflow: hidden;
+  aspect-ratio: 16/9; background: #f0f5f8;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.thumb-placeholder {
+  width: 100%; height: 100%; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #adb5bd;
+}
+
+.video-title {
+  font-size: .88rem; line-height: 1.35;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.video-link { color: #0077b6; text-decoration: none; font-size: .72rem;
+  &:hover { text-decoration: underline; } }
+.video-desc {
+  font-size: .72rem; line-height: 1.4;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+/* pagination */
+.card-footer { background: #f8fbfd; border-top: 1px solid #e3eaf0; border-radius: 0 0 12px 12px; }
+.page-link { cursor: pointer; }
+.page-item.active .page-link { background: #1B4965; border-color: #1B4965; }
+
+/* ── Versions list ── */
+.versions-list { }
+.version-item { }
+.version-divider { height: 1px; background: #eef2f5; margin: 0; }
+
+.version-row { padding: 1rem; }
+
+.version-bubble {
+  background: #1B4965; color: #fff;
+  font-size: .72rem; font-weight: 700;
+  padding: 4px 10px; border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* Location chip */
+.location-chip {
+  font-size: .7rem; background: #f0f7fb;
+  border: 1px solid #c8dfe8; border-radius: 6px;
+  padding: 2px 8px; color: #2c5f7a;
+  word-break: break-all; max-width: 260px;
+}
+
+/* Criteria block */
+.criteria-block {
+  background: #f8fbfd; border: 1px solid #e8f0f5;
+  border-radius: 8px; padding: .5rem .75rem;
+}
+.criteria-label {
+  font-size: .65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: #6c757d; margin-bottom: .3rem;
+}
+
+/* Meta table inside criteria block */
+.meta-table { width: 100%; border-collapse: collapse; }
+.meta-table tr { border-bottom: 1px solid #eef2f5; }
+.meta-table tr:last-child { border: none; }
+.mk { padding: .2rem .25rem; font-size: .72rem; color: #6c8a99; font-weight: 600; width: 45%; }
+.mv { padding: .2rem .25rem; font-size: .72rem; color: #2c3e50; word-break: break-word; }
+
+/* ── Detail table (right panel) ── */
+.detail-table {
+  width: 100%; border-collapse: collapse;
+  tr { border-bottom: 1px solid #f0f5f8; &:last-child { border: none; } }
+}
+.dt-key {
+  width: 110px; padding: .5rem 1rem;
+  font-size: .73rem; font-weight: 700; color: #6c8a99;
+  white-space: nowrap; vertical-align: top;
+}
+.dt-val {
+  padding: .5rem .75rem; font-size: .82rem; color: #2c3e50; word-break: break-word;
+}
+.approach-full { font-size: .68rem; word-break: break-all; }
+
+/* ── Skeleton ── */
+.skeleton-hero {
+  height: 160px; border-radius: 14px;
+  background: linear-gradient(90deg,#e8f0f5 25%,#f5f9fc 50%,#e8f0f5 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+.skeleton-block {
+  border-radius: 12px;
+  background: linear-gradient(90deg,#e8f0f5 25%,#f5f9fc 50%,#e8f0f5 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0 50%} }

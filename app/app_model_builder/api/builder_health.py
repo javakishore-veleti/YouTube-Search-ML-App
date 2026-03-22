@@ -7,7 +7,7 @@ from typing import Optional
 from app.app_common.dtos.init_dtos import InitDTO
 from app.app_model_builder.handlers.model_location_resolver import ModelLocationResolver
 
-logger = logging.getLogger("app.builder_health")
+logger = logging.getLogger(__name__)
 _CACHE_TTL = 30  # seconds
 
 
@@ -60,10 +60,7 @@ class BuilderHealth:
         return self._cached_response
 
 
-def initialize(dto: InitDTO) -> None:
-    handler = BuilderHealth()
-    dto.app.add_api_route(
-        "/builder/health",
-        endpoint=handler.health,
-        methods=["GET"],
-    )
+class Initializer:
+    def initialize(self, dto: InitDTO) -> None:
+        handler = BuilderHealth()
+        dto.app.add_api_route("/builder/health", endpoint=handler.health, methods=["GET"])

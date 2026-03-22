@@ -1,6 +1,10 @@
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()   # always load .env first so FEATURES_* toggles are available
+
+# Resolve secrets from the active provider (AWS SM / Azure KV / GCP SM / encrypted file / .env)
+from app.app_common.config.secrets_resolver import resolve_secrets
+resolve_secrets()
 
 import logging
 import logging.handlers
@@ -13,7 +17,7 @@ LOG_DIR = REPO_ROOT / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "app.log"
 
-LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d) - %(message)s"
 
 # Rolling file: 10 MB per file, keep 20 backups (app.log, app.log.1 … app.log.20)
 file_handler = logging.handlers.RotatingFileHandler(
@@ -35,7 +39,7 @@ logging.basicConfig(level=logging.DEBUG, handlers=[console_handler, file_handler
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
-logger = logging.getLogger("app.main")
+logger = logging.getLogger(__name__)
 logger.info("=== App startup begin ===")
 
 from fastapi import FastAPI, Request
@@ -43,16 +47,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.app_common.api_initializer import APIInitializer
 from app.app_common.app_status import set_status
-from app.app_common.database.db_engine import engine
-from app.app_common.database.db_models import Base
 from app.app_model_serving.api.api_manager import ApiManager
 from app.app_common.dtos.init_dtos import InitDTO
 
-# Create all DB tables
+# ── DB migrations ─────────────────────────────────────────────
+# api-web-start.sh runs `alembic upgrade head` before uvicorn starts.
+# This call is a safety net for Docker entrypoints and direct `uvicorn` runs
+# that bypass the shell script.  Alembic is idempotent — running twice is safe.
 t0 = time.time()
-Base.metadata.create_all(bind=engine)
+from alembic.config import Config
+from alembic import command as alembic_command
+_alembic_cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+alembic_command.upgrade(_alembic_cfg, "head")
 set_status("db_initialized", True)
-logger.info(f"DB tables created in {time.time()-t0:.3f}s")
+logger.info(f"DB migrated to head in {time.time()-t0:.3f}s")
 
 app: FastAPI = ApiManager.initialize_app()
 

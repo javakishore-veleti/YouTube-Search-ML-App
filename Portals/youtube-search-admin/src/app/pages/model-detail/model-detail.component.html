@@ -1,0 +1,299 @@
+<div class="detail-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-bar mb-4" aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item">
+        <a routerLink="/" class="bc-link"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a routerLink="/models" class="bc-link"><i class="bi bi-cpu me-1"></i>Models</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Model #{{ id }}</li>
+    </ol>
+  </nav>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded">
+    <div class="skeleton-hero mb-4"></div>
+    <div class="row g-3">
+      <div class="col-lg-8"><div class="skeleton-block" style="height:320px"></div></div>
+      <div class="col-lg-4"><div class="skeleton-block" style="height:320px"></div></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="loaded && error" class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="back()">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </button>
+  </div>
+
+  <!-- Main content — narrowed to ModelRecord via as m -->
+  <ng-container *ngIf="model as m">
+
+    <!-- Hero card -->
+    <div class="hero-card card mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+          <div class="hero-icon"><i class="bi bi-cpu-fill"></i></div>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <h3 class="fw-bold mb-0">{{ m.model_name }}</h3>
+              <span class="badge version-badge ms-1">v{{ m.latest_version }}</span>
+              <span class="badge approach-badge"
+                    [ngClass]="approachBadgeClass(m.model_approach_type)"
+                    [title]="m.model_approach_type">
+                {{ approachShort(m.model_approach_type) }}
+              </span>
+            </div>
+            <p class="text-muted mb-0 small">
+              Model #{{ m.id }} &nbsp;·&nbsp; Owner: {{ m.user_id }} &nbsp;·&nbsp;
+              Created {{ m.created_dt | date:'MMMM d, y' }}
+              &nbsp;·&nbsp;
+              <i class="bi bi-camera-video me-1"></i>{{ m.video_count ?? allVideos(m).length }} video{{ (m.video_count ?? allVideos(m).length) !== 1 ? 's' : '' }}
+            </p>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm align-self-start" (click)="back()">
+            <i class="bi bi-arrow-left me-1"></i>Back to Models
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="row g-4">
+
+      <!-- LEFT col: Approach + Videos + Versions -->
+      <div class="col-12 col-xl-8 d-flex flex-column gap-4">
+
+        <!-- ── Approach info card ── -->
+        <div *ngIf="approach" class="card approach-card">
+          <div class="card-header section-header">
+            <i class="bi bi-diagram-3 me-2 text-ocean"></i>Approach
+          </div>
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <span class="fw-bold approach-name">{{ approach.name }}</span>
+              <span *ngIf="approach.category" class="badge bg-light text-secondary" style="font-size:.65rem">{{ approach.category }}</span>
+            </div>
+            <p *ngIf="approach.description" class="text-muted small mb-2">{{ approach.description }}</p>
+            <p *ngIf="approach.notes" class="text-muted small fst-italic mb-2">
+              <i class="bi bi-chat-left-quote me-1"></i>{{ approach.notes }}
+            </p>
+            <div class="font-monospace text-muted" style="font-size:.65rem;word-break:break-all">{{ approach.id }}</div>
+          </div>
+        </div>
+
+        <!-- ── Videos accordion ── -->
+        <div class="card">
+          <div class="card-header section-header">
+            <i class="bi bi-camera-video me-2 text-ocean"></i>
+            Selected Videos
+            <span class="badge bg-secondary ms-2">{{ allVideos(m).length }}</span>
+          </div>
+
+          <div *ngIf="allVideos(m).length === 0" class="card-body text-muted small p-4">
+            No videos linked to this model yet.
+          </div>
+
+          <div *ngIf="allVideos(m).length > 0">
+            <div class="video-list">
+              <div *ngFor="let v of pagedVideos(m); let i = index"
+                   class="video-row d-flex align-items-start gap-3 p-3">
+
+                <!-- Row number -->
+                <div class="row-num flex-shrink-0">
+                  {{ (videosPage - 1) * videosPageSize + i + 1 }}
+                </div>
+
+                <!-- Thumbnail -->
+                <div class="thumb-wrap flex-shrink-0">
+                  <img *ngIf="v.thumbnail" [src]="v.thumbnail" [alt]="v.title" loading="lazy">
+                  <div *ngIf="!v.thumbnail" class="thumb-placeholder">
+                    <i class="bi bi-play-circle"></i>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-grow-1 min-w-0">
+                  <div class="fw-semibold video-title" [title]="v.title">{{ v.title }}</div>
+                  <div class="text-muted small mt-1">
+                    <i class="bi bi-person me-1"></i>{{ v.channel }}
+                  </div>
+                  <a [href]="v.url || 'https://youtube.com/watch?v=' + v.video_id"
+                     target="_blank" class="video-link mt-1 d-inline-block small">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>{{ v.video_id }}
+                  </a>
+                  <div *ngIf="v.description" class="video-desc text-muted small mt-1">
+                    {{ v.description | slice:0:160 }}{{ v.description.length > 160 ? '…' : '' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div *ngIf="videosTotalPages > 1"
+                 class="card-footer d-flex justify-content-between align-items-center py-2 px-3">
+              <small class="text-muted">
+                Showing {{ (videosPage - 1) * videosPageSize + 1 }}–{{ videoPageEnd(m) }} of {{ allVideos(m).length }}
+              </small>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="videosPage === 1">
+                  <a class="page-link" (click)="setVideosPage(videosPage - 1)">‹</a>
+                </li>
+                <li *ngFor="let p of videosPages" class="page-item" [class.active]="p === videosPage">
+                  <a class="page-link" (click)="setVideosPage(p)">{{ p }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="videosPage === videosTotalPages">
+                  <a class="page-link" (click)="setVideosPage(videosPage + 1)">›</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Versions accordion ── -->
+        <div class="card">
+          <div class="card-header section-header">
+            <i class="bi bi-layers me-2 text-ocean"></i>
+            Versions
+            <span class="badge bg-secondary ms-2">{{ versions(m).length }}</span>
+          </div>
+
+          <div *ngIf="versions(m).length === 0" class="card-body text-muted small p-4">
+            No versions found for this model.
+          </div>
+
+          <div *ngIf="versions(m).length > 0" class="versions-list">
+            <div *ngFor="let v of versions(m); let vi = index" class="version-item">
+              <div class="version-row d-flex align-items-start gap-3 p-3">
+                <div class="version-bubble flex-shrink-0">{{ v.version }}</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+                    <div class="small text-muted">
+                      <i class="bi bi-calendar me-1"></i>{{ v.created_dt | date:'MMM d, y, h:mm a' }}
+                    </div>
+                  </div>
+
+                  <!-- Storage info — always shown as a full labeled block -->
+                  <div class="storage-block mb-2">
+                    <!-- Row 1: type badge -->
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <span class="storage-type-badge">
+                        <i class="bi me-1" [ngClass]="storageIcon(v.storage_type)"></i>
+                        {{ storageLabel(v.storage_type) }}
+                      </span>
+                    </div>
+                    <!-- Row 2: physical path (always shown) -->
+                    <div class="storage-path-row">
+                      <i class="bi bi-folder2-open me-1 text-ocean flex-shrink-0"></i>
+                      <span *ngIf="resolvedPath(v)"
+                            class="font-monospace storage-path-text"
+                            [title]="resolvedPath(v)">{{ resolvedPath(v) }}</span>
+                      <span *ngIf="!resolvedPath(v)" class="text-muted fst-italic" style="font-size:.78rem">
+                        Path not set — model not built yet
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Sub-models for this version -->
+                  <ng-container *ngIf="v.input_criteria?.selected_sub_models?.length">
+                    <div class="criteria-label mt-1 mb-1">Sub-Models</div>
+                    <div class="d-flex flex-column gap-1 mb-2">
+                      <div *ngFor="let sm of resolvedSubModels(v.input_criteria.selected_sub_models)"
+                           class="submodel-card">
+                        <span class="fw-semibold small">{{ sm.name }}</span>
+                        <span *ngIf="sm.description" class="text-muted ms-1" style="font-size:.7rem"> — {{ sm.description }}</span>
+                        <span *ngIf="sm.embedding_dim" class="text-muted ms-1" style="font-size:.68rem">({{ sm.embedding_dim }}-dim)</span>
+                      </div>
+                    </div>
+                  </ng-container>
+                  <div class="row g-2">
+                    <div class="col-12 col-md-6" *ngIf="objectEntries(v.input_criteria).length > 0">
+                      <div class="criteria-block">
+                        <div class="criteria-label">Input Criteria</div>
+                        <table class="meta-table">
+                          <tr *ngFor="let e of objectEntries(v.input_criteria)">
+                            <td class="mk">{{ e.key }}</td><td class="mv font-monospace">{{ e.value }}</td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-6" *ngIf="objectEntries(v.output_criteria).length > 0">
+                      <div class="criteria-block">
+                        <div class="criteria-label">Output Criteria</div>
+                        <table class="meta-table">
+                          <tr *ngFor="let e of objectEntries(v.output_criteria)">
+                            <td class="mk">{{ e.key }}</td><td class="mv font-monospace">{{ e.value }}</td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="col-12"
+                         *ngIf="objectEntries(v.input_criteria).length === 0 && objectEntries(v.output_criteria).length === 0">
+                      <span class="text-muted small">No criteria recorded for this version.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="vi < versions(m).length - 1" class="version-divider"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT col: Model details + Output results -->
+      <div class="col-12 col-xl-4 d-flex flex-column gap-4">
+
+        <!-- Model info -->
+        <div class="card">
+          <div class="card-header section-header">
+            <i class="bi bi-info-circle me-2 text-ocean"></i>Model Details
+          </div>
+          <div class="card-body p-0">
+            <table class="detail-table">
+              <tr><td class="dt-key">Model ID</td><td class="dt-val font-monospace">#{{ m.id }}</td></tr>
+              <tr><td class="dt-key">Name</td><td class="dt-val fw-semibold">{{ m.model_name }}</td></tr>
+              <tr>
+                <td class="dt-key">Approach</td>
+                <td class="dt-val">
+                  <div class="fw-semibold small">{{ approach?.name ?? m.model_approach_type }}</div>
+                  <div *ngIf="approach?.category" class="text-muted" style="font-size:.68rem">{{ approach!.category }}</div>
+                  <div class="font-monospace text-muted" style="font-size:.62rem;word-break:break-all">{{ m.model_approach_type }}</div>
+                </td>
+              </tr>
+              <tr><td class="dt-key">Owner</td><td class="dt-val">{{ m.user_id }}</td></tr>
+              <tr>
+                <td class="dt-key">Latest Ver.</td>
+                <td class="dt-val"><span class="badge version-badge">v{{ m.latest_version }}</span></td>
+              </tr>
+              <tr><td class="dt-key">Videos</td><td class="dt-val">{{ m.video_count ?? allVideos(m).length }}</td></tr>
+              <tr><td class="dt-key">Versions</td><td class="dt-val">{{ versions(m).length }}</td></tr>
+              <tr><td class="dt-key">Created</td><td class="dt-val">{{ m.created_dt | date:'medium' }}</td></tr>
+              <tr><td class="dt-key">Updated</td><td class="dt-val">{{ m.updated_dt ? (m.updated_dt | date:'medium') : '—' }}</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Output results (only if has meaningful data) -->
+        <div class="card" *ngIf="objectEntries(m.output_results).length > 0">
+          <div class="card-header section-header">
+            <i class="bi bi-graph-up me-2 text-ocean"></i>Output Results
+          </div>
+          <div class="card-body p-0">
+            <table class="detail-table">
+              <tr *ngFor="let e of objectEntries(m.output_results)">
+                <td class="dt-key">{{ e.key }}</td>
+                <td class="dt-val font-monospace">{{ e.value }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+</div>

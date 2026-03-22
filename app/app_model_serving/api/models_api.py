@@ -12,6 +12,7 @@ class ModelsAPI:
         return self.cache.get_models()
 
 
-def initialize(dto: InitDTO) -> None:
-    handler = ModelsAPI()
-    dto.app.add_api_route("/models", endpoint=handler.list_models, methods=["GET"])
+class Initializer:
+    def initialize(self, dto: InitDTO) -> None:
+        handler = ModelsAPI()
+        dto.app.add_api_route("/models", endpoint=handler.list_models, methods=["GET"])

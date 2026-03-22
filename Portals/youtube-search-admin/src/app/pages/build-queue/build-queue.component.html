@@ -1,59 +1,132 @@
-<div class="queue-container p-4">
-  <h2 class="fw-bold mb-1"><i class="bi bi-list-check me-2 text-ocean"></i>Build Queue</h2>
-  <p class="text-muted mb-4">Model build requests processed by the background scheduler.</p>
+<div class="queue-page p-4">
 
-  <p *ngIf="error" class="text-danger">{{ error }}</p>
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-list-check me-2 text-ocean"></i>Build Queue</h2>
+      <p class="text-muted mb-0 small">Click any row to view full details.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <select class="form-select form-select-sm" style="width:160px"
+              [(ngModel)]="statusFilter" (change)="load(1)">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+        <option value="failed">Failed</option>
+      </select>
+      <button class="btn btn-sm btn-outline-secondary" (click)="load(page)" title="Refresh">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
 
-  <!-- Empty state -->
-  <div *ngIf="loaded && items.length === 0" class="text-center py-5">
-    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-    <p class="fw-semibold mb-1">No build requests yet</p>
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible">{{ error }}</div>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded" class="card shadow-sm">
+    <div class="card-body p-3">
+      <div *ngFor="let _ of [1,2,3,4,5]" class="skeleton-row mb-2"></div>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="loaded && items.length === 0" class="empty-state">
+    <i class="bi bi-inbox display-4 text-muted"></i>
+    <p class="fw-semibold mt-3 mb-1">No build requests yet</p>
     <small class="text-muted">Submit a model build from the Build Model page.</small>
   </div>
 
-  <!-- Queue table -->
-  <div class="card p-3" *ngIf="items.length > 0">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0">Queue <small class="text-muted fw-normal">({{ total }})</small></h5>
-      <small class="text-muted"><i class="bi bi-arrow-repeat me-1"></i>Auto-refreshes every 15s</small>
+  <!-- Table -->
+  <div *ngIf="loaded && items.length > 0" class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+      <span class="fw-semibold small text-muted">{{ total }} item{{ total !== 1 ? 's' : '' }}</span>
+      <small class="text-muted"><i class="bi bi-arrow-repeat me-1"></i>Refreshes every 15 s</small>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0">
+      <table class="table table-hover queue-table mb-0">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Model Name</th>
-            <th>Approach</th>
-            <th>Videos</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Started</th>
-            <th>Completed</th>
-            <th>Error</th>
+            <th class="col-id">#</th>
+            <th class="col-name">Model Name</th>
+            <th class="col-approach">Approach</th>
+            <th class="col-videos text-center">Videos</th>
+            <th class="col-status">Status</th>
+            <th class="col-created">Queued</th>
+            <th class="col-completed">Completed</th>
+            <th class="col-action"></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items">
-            <td class="text-muted">{{ item.id }}</td>
-            <td class="fw-semibold">{{ item.model_name }}</td>
-            <td>{{ item.approach_type }}</td>
-            <td>{{ item.selected_videos_count }}</td>
-            <td>
-              <span class="badge rounded-pill" [ngClass]="badge(item.status)">{{ item.status }}</span>
+          <tr *ngFor="let item of items"
+              class="queue-row"
+              (click)="openDetail(item.id)"
+              role="button"
+              title="View details">
+
+            <!-- ID -->
+            <td class="col-id text-muted fw-semibold">#{{ item.id }}</td>
+
+            <!-- Model name -->
+            <td class="col-name">
+              <div class="fw-semibold text-truncate model-name-cell">{{ item.model_name }}</div>
+              <div *ngIf="item.publish_as_latest" class="mt-1">
+                <span class="badge badge-latest"><i class="bi bi-star-fill me-1"></i>Latest</span>
+              </div>
             </td>
-            <td class="text-muted small">{{ item.created_dt | date:'short' }}</td>
-            <td class="text-muted small">{{ item.started_dt ? (item.started_dt | date:'short') : '—' }}</td>
-            <td class="text-muted small">{{ item.completed_dt ? (item.completed_dt | date:'short') : '—' }}</td>
-            <td class="text-danger small">{{ item.error_message || '' }}</td>
+
+            <!-- Approach (short UUID) -->
+            <td class="col-approach">
+              <span class="font-monospace approach-id" [title]="item.approach_type">
+                {{ item.approach_type | slice:0:8 }}…
+              </span>
+            </td>
+
+            <!-- Video count -->
+            <td class="col-videos text-center">
+              <span class="vid-count">
+                <i class="bi bi-camera-video me-1"></i>{{ item.selected_videos_count }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td class="col-status">
+              <span class="status-pill" [ngClass]="badgeClass(item.status)">
+                <i class="bi me-1" [ngClass]="statusIcon(item.status)"></i>
+                {{ item.status | titlecase }}
+              </span>
+            </td>
+
+            <!-- Queued date -->
+            <td class="col-created text-muted small">
+              {{ item.created_dt | date:'MMM d, y' }}<br>
+              <span class="text-muted-xs">{{ item.created_dt | date:'h:mm a' }}</span>
+            </td>
+
+            <!-- Completed date -->
+            <td class="col-completed text-muted small">
+              <ng-container *ngIf="item.completed_dt; else noDt">
+                {{ item.completed_dt | date:'MMM d, y' }}<br>
+                <span class="text-muted-xs">{{ item.completed_dt | date:'h:mm a' }}</span>
+              </ng-container>
+              <ng-template #noDt><span class="text-muted-xs">—</span></ng-template>
+            </td>
+
+            <!-- Arrow -->
+            <td class="col-action text-end">
+              <i class="bi bi-chevron-right text-muted"></i>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <nav *ngIf="totalPages > 1" class="mt-3 d-flex justify-content-between align-items-center">
-      <small class="text-muted">Page {{ page }} / {{ totalPages }}</small>
+    <div *ngIf="totalPages > 1"
+         class="card-footer d-flex justify-content-between align-items-center py-2 px-3">
+      <small class="text-muted">Page {{ page }} of {{ totalPages }}</small>
       <ul class="pagination pagination-sm mb-0">
         <li class="page-item" [class.disabled]="page === 1">
           <a class="page-link" (click)="load(page - 1)">‹</a>
@@ -65,6 +138,7 @@
           <a class="page-link" (click)="load(page + 1)">›</a>
         </li>
       </ul>
-    </nav>
+    </div>
   </div>
+
 </div>

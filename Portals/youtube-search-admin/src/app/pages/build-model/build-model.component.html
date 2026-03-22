@@ -40,13 +40,36 @@
     <!-- Approach Dropdown -->
     <div class="mb-4">
       <label class="form-label fw-semibold"><i class="bi bi-cpu me-1 text-sky"></i> ML Approach</label>
-      <select class="form-select custom-select" [(ngModel)]="selectedApproach">
+      <select class="form-select custom-select" [(ngModel)]="selectedApproach" (ngModelChange)="onApproachChange()">
         <option value="" disabled>— Select an approach —</option>
         <option *ngFor="let a of approaches" [value]="a.id">{{ a.name }}</option>
       </select>
     </div>
 
-    <button class="btn btn-ocean btn-lg rounded-pill px-5" (click)="goToStep2()" [disabled]="!modelName.trim() || !selectedApproach || !apiKeyConfigured">
+    <!-- Sub-model selector (driven by approaches.json) -->
+    <div class="mb-4" *ngIf="subModelConfig">
+      <label class="form-label fw-semibold"><i class="bi bi-diagram-3-fill me-1 text-sky"></i> Sub-Model Selection</label>
+
+      <!-- Single select -->
+      <select *ngIf="!isMultiSubModel" class="form-select custom-select" [ngModel]="selectedSubModels[0] || ''" (ngModelChange)="toggleSubModel($event)">
+        <option value="" disabled>— Select a sub-model —</option>
+        <option *ngFor="let option of subModelOptions" [value]="option.id">{{ option.name }}</option>
+      </select>
+
+      <!-- Multi select -->
+      <div *ngIf="isMultiSubModel" class="submodel-list p-3">
+        <div *ngFor="let option of subModelOptions" class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" [id]="'submodel-' + option.id" [checked]="isSubModelSelected(option.id)" (change)="toggleSubModel(option.id)" />
+          <label class="form-check-label" [for]="'submodel-' + option.id">{{ option.name }}</label>
+        </div>
+      </div>
+
+      <small class="text-muted-cool d-block mt-2">
+        {{ isMultiSubModel ? 'You can select multiple sub-models.' : 'Select one sub-model.' }}
+      </small>
+    </div>
+
+    <button class="btn btn-ocean btn-lg rounded-pill px-5" (click)="goToStep2()" [disabled]="!canProceedFromStep1()">
       Next: Search Videos <i class="bi bi-arrow-right ms-2"></i>
     </button>
   </div>
