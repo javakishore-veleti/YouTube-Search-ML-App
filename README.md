@@ -1,6 +1,6 @@
 # YouTube-Search-ML-App
 
-A smart YouTube search application powered by Machine Learning. It allows users to search for YouTube videos using natural language queries, leveraging ML models to understand user intent and surface the most relevant video content.
+A smart video discovery application powered by Machine Learning. It allows users to search public video content using natural language queries, leveraging ML models to understand user intent and surface the most relevant results.
 
 ## Features
 
@@ -61,8 +61,8 @@ Installs npm dependencies for both Angular portals (`youtube-search` and `youtub
 |---|---|---|
 | FastAPI Backend | 8000 | http://localhost:8000 |
 | API Docs (Swagger) | 8000 | http://localhost:8000/docs |
-| YouTube Search Portal | 4200 | http://localhost:4200 |
-| YouTube Search Admin Portal | 4201 | http://localhost:4201 |
+| VidSage Search Portal | 4200 | http://localhost:4200 |
+| VidSage Studio Portal | 4201 | http://localhost:4201 |
 
 All ports are overridable via environment variables: `API_PORT`, `PORTAL_PORT`, `ADMIN_PORT`.
 
@@ -107,20 +107,20 @@ YouTube-Search-ML-App/
 
 ## Portals
 
-### YouTube Search (End-User)
+### VidSage Search (End-User)
 
 - **Port:** 4200
 - **Theme:** Warm sunset gradient (coral, amber, teal)
-- Select a pre-published ML model and search for YouTube videos
+- Select a pre-published ML model and search public video content
 - Results displayed in a card grid with thumbnails
 
-### YouTube Search Admin
+### VidSage Studio (Admin)
 
 - **Port:** 4201
 - **Theme:** Cool ocean palette (deep blue, sky blue, mint)
 - Select ML approach (Classical ML, PyTorch, TensorFlow, SageMaker, LLM)
-- Enter YouTube API key — stored in browser `localStorage` only, **never sent to backend**
-- Trigger model builds and optionally publish as latest
+- Manage build queue, model creation, and admin settings
+- Configure backend-driven model workflows
 
 ---
 

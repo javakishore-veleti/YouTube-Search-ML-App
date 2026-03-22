@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
 # api-web-status.sh
-# Shows running status of all YouTube Search ML App services:
+# Shows running status of all VidSage services:
 #   - Backend FastAPI server
-#   - Angular Portal: youtube-search
-#   - Angular Portal: youtube-search-admin
+#   - Angular Portal: youtube-search         (Portals/youtube-search)
+#   - Angular Portal: youtube-search-admin   (Portals/youtube-search-admin)
 # =============================================================================
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,7 +38,7 @@ print_status() {
 
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════${RESET}"
-echo -e "${CYAN}  YouTube Search ML App — Service Status${RESET}"
+echo -e "${CYAN}  VidSage — Service Status${RESET}"
 echo -e "${CYAN}═══════════════════════════════════════════════════${RESET}"
 print_status "Backend FastAPI        " "$API_PORT"    "http://localhost:${API_PORT}  (docs: http://localhost:${API_PORT}/docs)"
 print_status "Portal: youtube-search " "$PORTAL_PORT" "http://localhost:${PORTAL_PORT}"

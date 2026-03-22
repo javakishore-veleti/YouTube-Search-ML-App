@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { AppInfoService } from '../../services/app-info.service';
+import type { AppInfo } from '../../services/app-info.service';
 
 @Component({
   selector: 'app-about',
@@ -11,14 +11,14 @@ import { environment } from '../../environments/environment';
   styleUrl: './about.component.scss'
 })
 export class AboutComponent implements OnInit {
-  appInfo: any = null;
+  appInfo: AppInfo | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private appInfoService: AppInfoService) {}
 
   ngOnInit(): void {
-    this.http.get(`${environment.apiBaseUrl}/info`).subscribe({
-      next: (data) => this.appInfo = data,
-      error: () => this.appInfo = { name: 'YouTube Search ML App', description: 'Unable to fetch info from backend.' }
+    this.appInfoService.getInfo().subscribe({
+      next: (data: AppInfo) => this.appInfo = data,
+      error: () => this.appInfo = { name: 'VidSage', description: 'Unable to fetch info from backend.' }
     });
   }
 }

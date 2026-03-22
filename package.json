@@ -1,7 +1,7 @@
 {
   "name": "youtube-search-ml-app",
   "version": "1.0.0",
-  "description": "Deployment and environment setup scripts for YouTube Search ML App",
+  "description": "Deployment and environment setup scripts for VidSage",
   "private": true,
   "scripts": {
     "env-setup:init:install": "pip install -r requirements.txt",

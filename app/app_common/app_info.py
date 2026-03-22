@@ -4,19 +4,18 @@ from app.app_common.dtos.init_dtos import InitDTO
 class AppInfo:
     def info(self) -> dict:
         return {
-            "name": "YouTube Search ML App",
+            "name": "VidSage",
             "description": (
-                "A smart YouTube search application powered by Machine Learning. "
-                "It allows users to search for YouTube videos using natural language queries, "
+                "A smart video discovery application powered by Machine Learning. "
+                "It helps users search public video content using natural language queries, "
                 "leveraging ML models to understand user intent and surface the most relevant "
-                "video content. Instead of relying solely on keyword matching, the app uses "
-                "semantic understanding to deliver smarter, context-aware search results "
-                "from YouTube."
+                "results. Instead of relying solely on keyword matching, the app uses "
+                "semantic understanding to deliver smarter, context-aware discovery results."
             ),
             "features": [
-                "Natural language YouTube video search",
-                "ML-powered semantic understanding of search queries",
-                "Context-aware and intent-driven search results",
+                "Natural language video discovery",
+                "AI-powered semantic understanding of search queries",
+                "Context-aware and intent-driven results",
                 "RESTful API interface for easy integration",
             ],
             "version": "1.0.0",

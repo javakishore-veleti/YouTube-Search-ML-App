@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # api-web-start.sh
-# Starts all services for the YouTube Search ML App:
+# Starts all services for VidSage:
 #   - Backend FastAPI server
 #   - Angular Portal: youtube-search         (Portals/youtube-search)
 #   - Angular Portal: youtube-search-admin   (Portals/youtube-search-admin)
@@ -86,7 +86,7 @@ fi
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════${RESET}"
-echo -e "${GREEN}  YouTube Search ML App — Services Running${RESET}"
+echo -e "${GREEN}  VidSage — Services Running${RESET}"
 echo -e "${GREEN}═══════════════════════════════════════════════════${RESET}"
 echo -e "  Backend API       → http://localhost:${API_PORT}"
 echo -e "  API Docs          → http://localhost:${API_PORT}/docs"

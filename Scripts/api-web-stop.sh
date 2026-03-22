@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
 # api-web-stop.sh
-# Stops all YouTube Search ML App services:
-#   - Backend FastAPI server (uvicorn)
-#   - Angular Portal: youtube-search
-#   - Angular Portal: youtube-search-admin
+# Stops all VidSage services:
+#   - Backend FastAPI server
+#   - Angular Portal: youtube-search         (Portals/youtube-search)
+#   - Angular Portal: youtube-search-admin   (Portals/youtube-search-admin)
 # =============================================================================
 
 # ── Colours ──────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ kill_port() {
 
 echo ""
 echo -e "${RED}═══════════════════════════════════════════════════${RESET}"
-echo -e "${RED}  YouTube Search ML App — Stopping Services${RESET}"
+echo -e "${RED}  VidSage — Stopping Services${RESET}"
 echo -e "${RED}═══════════════════════════════════════════════════${RESET}"
 
 kill_port "Backend FastAPI (uvicorn)"    "$API_PORT"

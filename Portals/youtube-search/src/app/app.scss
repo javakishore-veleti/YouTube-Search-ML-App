@@ -7,3 +7,22 @@
   overflow-y: auto;
   min-height: 100vh;
 }
+
+.top-header {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #f1ded1;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand-pill {
+  background: linear-gradient(135deg, #ff8b6a, #ffb347);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}

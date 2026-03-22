@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 _status: Dict[str, Any] = {
-    "app_name": "YouTube Search ML App",
+    "app_name": "VidSage",
     "started_at": datetime.now(timezone.utc).isoformat(),
     "models_built": 0,
     "last_build": None,
