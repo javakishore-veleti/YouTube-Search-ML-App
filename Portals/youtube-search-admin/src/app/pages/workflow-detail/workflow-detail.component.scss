@@ -1,0 +1,120 @@
+:host { display: block; }
+
+.detail-page { padding: 1.75rem; max-width: 1280px; }
+.text-ocean { color: #0077b6 !important; }
+
+/* Breadcrumb */
+.bc-link { color: #0077b6; text-decoration: none; font-size: .85rem;
+  &:hover { text-decoration: underline; } }
+.breadcrumb-item.active { font-size: .85rem; }
+.breadcrumb-item + .breadcrumb-item::before { color: #adb5bd; }
+
+/* Hero card */
+.hero-card { border: 1px solid #e3eaf0; border-radius: 14px; }
+
+.hero-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+}
+
+/* Status */
+.status-pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 12px; border-radius: 99px;
+  font-size: .78rem; font-weight: 600; white-space: nowrap;
+  &.sm { font-size: .7rem; padding: 2px 8px; }
+}
+.badge-started   { background: #e0f0ff; color: #024e87; }
+.badge-running   { background: #cfe2ff; color: #084298; }
+.badge-done      { background: #d1e7dd; color: #0f5132; }
+.badge-fail      { background: #f8d7da; color: #842029; }
+.badge-secondary { background: #e2e3e5; color: #41464b; }
+
+/* Cards */
+.card { border: 1px solid #e3eaf0; border-radius: 12px; }
+.section-header {
+  background: #f8fbfd; border-bottom: 1px solid #e3eaf0;
+  border-radius: 12px 12px 0 0;
+  font-size: .8rem; font-weight: 700; color: #3d5a72;
+  padding: .6rem 1rem;
+}
+
+/* Approach card */
+.approach-card { border-left: 4px solid #0077b6; }
+.approach-name { font-size: .95rem; color: #1B4965; }
+
+/* Tasks table */
+.tasks-table {
+  th {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .05em;
+    color: #6c8a99; font-weight: 700; padding: .4rem .75rem;
+    border-bottom: 2px solid #e3eaf0; white-space: nowrap;
+  }
+  td { padding: .45rem .75rem; vertical-align: middle; font-size: .8rem; }
+}
+.task-row {
+  cursor: pointer; transition: background .12s;
+  &:hover { background: #f0f7fb; }
+  &:hover .bi-chevron-right { color: #0077b6 !important; }
+}
+.tc-order  { width: 36px; }
+.tc-name   { min-width: 180px; font-size: .8rem; }
+.tc-file   { min-width: 180px; }
+.tc-status { width: 100px; }
+.tc-start  { width: 110px; }
+.tc-dur    { width: 70px; }
+.tc-action { width: 36px; }
+.task-file-text { font-size: .65rem; color: #6c8a99; }
+
+.task-status-badge {
+  font-size: .65rem; font-weight: 700; border-radius: 99px; padding: 2px 8px;
+}
+.task-pending   { background: #f1f5f9; color: #64748b; }
+.task-started   { background: #fff3cd; color: #856404; }
+.task-completed { background: #d1fae5; color: #065f46; }
+.task-failed    { background: #ffe4e6; color: #9f1239; }
+.task-skipped   { background: #e2e8f0; color: #64748b; }
+
+/* Detail table */
+.detail-table {
+  width: 100%; border-collapse: collapse;
+  tr { border-bottom: 1px solid #f0f5f8; &:last-child { border: none; } }
+}
+.dt-key {
+  width: 100px; padding: .5rem 1rem; font-size: .73rem;
+  font-weight: 700; color: #6c8a99; white-space: nowrap; vertical-align: top;
+}
+.dt-val {
+  padding: .5rem .75rem; font-size: .82rem; color: #2c3e50; word-break: break-word;
+}
+
+/* Error box */
+.error-box {
+  background: #fff5f5; border-radius: 6px; color: #842029;
+  padding: .6rem .75rem; white-space: pre-wrap;
+  word-break: break-all; font-size: .78rem;
+  max-height: 200px; overflow-y: auto;
+}
+
+/* Footer/pagination */
+.card-footer { background: #f8fbfd; border-top: 1px solid #e3eaf0; border-radius: 0 0 12px 12px; }
+.page-link { cursor: pointer; }
+.page-item.active .page-link { background: #1B4965; border-color: #1B4965; }
+
+/* Skeleton */
+.skeleton-hero {
+  height: 140px; border-radius: 14px;
+  background: linear-gradient(90deg,#e8f0f5 25%,#f5f9fc 50%,#e8f0f5 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+.skeleton-block {
+  border-radius: 12px;
+  background: linear-gradient(90deg,#e8f0f5 25%,#f5f9fc 50%,#e8f0f5 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+/* Spin */
+.spin { animation: spin 1.2s linear infinite; display: inline-block; }
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }

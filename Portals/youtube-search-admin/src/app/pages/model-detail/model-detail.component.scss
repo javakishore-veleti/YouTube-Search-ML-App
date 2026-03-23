@@ -129,6 +129,71 @@
 .page-link { cursor: pointer; }
 .page-item.active .page-link { background: #1B4965; border-color: #1B4965; }
 
+/* ── Workflow list ── */
+.wf-list { }
+.wf-item { }
+.wf-link-row {
+  cursor: pointer; transition: background .1s;
+  border-bottom: 1px solid #f0f5f8;
+  color: inherit;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #f0f7fb; }
+  &:hover .bi-chevron-right { color: #0077b6 !important; }
+}
+.wf-order {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #e8f0f5; color: #5a7a8a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; flex-shrink: 0;
+}
+
+/* WF status badges */
+.wf-status-badge {
+  font-size: .68rem; font-weight: 700; border-radius: 99px; padding: 2px 9px;
+}
+.wf-started   { background: #e0f0ff; color: #024e87; }
+.wf-running   { background: #fff3cd; color: #856404; }
+.wf-completed { background: #d1fae5; color: #065f46; }
+.wf-failed    { background: #ffe4e6; color: #9f1239; }
+
+.wf-error {
+  font-size: .72rem; color: #9f1239; background: #fff5f5;
+  border-top: 1px solid #fecdd3; padding: .3rem .75rem;
+}
+
+/* Tasks table */
+.wf-tasks-body { border-top: 1px solid #e8f0f5; }
+.tasks-table {
+  th {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .05em;
+    color: #6c8a99; font-weight: 700; padding: .4rem .75rem;
+    border-bottom: 2px solid #e3eaf0; white-space: nowrap;
+  }
+  td { padding: .45rem .75rem; vertical-align: middle; font-size: .8rem; }
+}
+.tc-order  { width: 36px; }
+.tc-name   { min-width: 180px; font-size: .8rem; }
+.tc-file   { min-width: 180px; }
+.tc-status { width: 100px; }
+.tc-start  { width: 110px; }
+.tc-dur    { width: 70px; }
+.task-file { font-size: .65rem; color: #6c8a99; }
+
+.task-status-badge {
+  font-size: .65rem; font-weight: 700; border-radius: 99px; padding: 2px 8px;
+}
+.task-pending   { background: #f1f5f9; color: #64748b; }
+.task-started   { background: #fff3cd; color: #856404; }
+.task-completed { background: #d1fae5; color: #065f46; }
+.task-failed    { background: #ffe4e6; color: #9f1239; }
+.task-skipped   { background: #e2e8f0; color: #64748b; }
+
+.task-footer { background: #f8fbfd; border-top: 1px solid #e3eaf0; }
+.page-link { cursor: pointer; }
+.page-item.active .page-link { background: #1B4965; border-color: #1B4965; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 /* ── Versions list ── */
 .versions-list { }
 .version-item { }

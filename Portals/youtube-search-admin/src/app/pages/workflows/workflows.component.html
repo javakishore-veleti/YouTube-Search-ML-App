@@ -1,0 +1,134 @@
+<div class="wf-page p-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-diagram-2 me-2 text-ocean"></i>Model Builder Workflows</h2>
+      <p class="text-muted mb-0 small">All workflow executions across model approaches. Click any row to view details.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <select class="form-select form-select-sm" style="width:160px"
+              [(ngModel)]="statusFilter" (change)="load(1)">
+        <option value="">All statuses</option>
+        <option value="started">Started</option>
+        <option value="running">Running</option>
+        <option value="completed">Completed</option>
+        <option value="failed">Failed</option>
+      </select>
+      <button class="btn btn-sm btn-outline-secondary" (click)="load(page)" title="Refresh">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible">{{ error }}</div>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded" class="card shadow-sm">
+    <div class="card-body p-3">
+      <div *ngFor="let _ of [1,2,3,4,5]" class="skeleton-row mb-2"></div>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="loaded && items.length === 0" class="empty-state">
+    <i class="bi bi-diagram-2 display-4 text-muted"></i>
+    <p class="fw-semibold mt-3 mb-1">No workflow runs yet</p>
+    <small class="text-muted">Submit a model build from the Build Model page to start a workflow.</small>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="loaded && items.length > 0" class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+      <span class="fw-semibold small text-muted">{{ total }} workflow{{ total !== 1 ? 's' : '' }}</span>
+      <small class="text-muted"><i class="bi bi-arrow-repeat me-1"></i>Refreshes every 15 s</small>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover wf-table mb-0">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th class="col-approach">Approach</th>
+            <th class="col-status">Status</th>
+            <th class="col-tasks text-center">Tasks</th>
+            <th class="col-model">Model ID</th>
+            <th class="col-queue">Queue ID</th>
+            <th class="col-started">Started</th>
+            <th class="col-dur">Duration</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let wf of items"
+              class="wf-row"
+              (click)="openDetail(wf.id)"
+              role="button"
+              title="View workflow details">
+
+            <td class="col-id text-muted fw-semibold">#{{ wf.id }}</td>
+
+            <td class="col-approach">
+              <span class="font-monospace approach-id" [title]="wf.approach_id">
+                {{ approachShort(wf.approach_id) }}
+              </span>
+            </td>
+
+            <td class="col-status">
+              <span class="status-pill" [ngClass]="badgeClass(wf.status)">
+                <i class="bi me-1" [ngClass]="statusIcon(wf.status)"></i>
+                {{ wf.status | titlecase }}
+              </span>
+            </td>
+
+            <td class="col-tasks text-center">
+              <span class="task-count">
+                <i class="bi bi-list-check me-1"></i>{{ wf.task_count }}
+              </span>
+            </td>
+
+            <td class="col-model text-muted small">
+              <span *ngIf="wf.model_id">#{{ wf.model_id }}</span>
+              <span *ngIf="!wf.model_id">—</span>
+            </td>
+
+            <td class="col-queue text-muted small">
+              <span *ngIf="wf.queue_item_id">#{{ wf.queue_item_id }}</span>
+              <span *ngIf="!wf.queue_item_id">—</span>
+            </td>
+
+            <td class="col-started text-muted small">
+              {{ wf.started_at | date:'MMM d, y' }}<br>
+              <span class="text-muted-xs">{{ wf.started_at | date:'h:mm a' }}</span>
+            </td>
+
+            <td class="col-dur text-muted small">{{ duration(wf) }}</td>
+
+            <td class="col-action text-end">
+              <i class="bi bi-chevron-right text-muted"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1"
+         class="card-footer d-flex justify-content-between align-items-center py-2 px-3">
+      <small class="text-muted">Page {{ page }} of {{ totalPages }}</small>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="page === 1">
+          <a class="page-link" (click)="load(page - 1)">&#8249;</a>
+        </li>
+        <li *ngFor="let p of pages" class="page-item" [class.active]="p === page">
+          <a class="page-link" (click)="load(p)">{{ p }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="page === totalPages">
+          <a class="page-link" (click)="load(page + 1)">&#8250;</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>

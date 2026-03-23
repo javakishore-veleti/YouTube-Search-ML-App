@@ -1,5 +1,7 @@
 <div class="about-container p-4">
-  <div class="about-card p-5" *ngIf="appInfo">
+
+  <!-- App info header -->
+  <div class="about-card p-5 mb-4" *ngIf="appInfo">
     <div class="text-center mb-4">
       <i class="bi bi-info-circle-fill display-3 text-teal"></i>
       <h2 class="fw-bold mt-3">{{ appInfo.name }}</h2>
@@ -7,7 +9,6 @@
         v{{ appInfo.version }}
       </span>
     </div>
-
     <p class="lead text-center text-muted-warm px-4">{{ appInfo.description }}</p>
 
     <div class="row g-3 mt-4" *ngIf="appInfo.features">
@@ -19,4 +20,42 @@
       </div>
     </div>
   </div>
+
+  <!-- Table of Contents -->
+  <div class="toc-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-bookmark me-2 text-coral"></i>How It Works</h5>
+    <p class="text-muted-warm small mb-3">VidSage uses several ML techniques to understand your queries and find the best videos. Click any topic to learn more.</p>
+    <div class="toc-list">
+      <a *ngFor="let t of topics; let i = index"
+         class="toc-item d-flex align-items-center gap-2"
+         (click)="scrollTo(t.id)" role="button">
+        <span class="toc-num">{{ i + 1 }}</span>
+        <i class="bi {{ t.icon }} text-coral"></i>
+        <span>{{ t.title }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Topic accordions -->
+  <div class="topics-section">
+    <div *ngFor="let t of topics; let i = index"
+         [id]="t.id"
+         class="topic-card mb-3">
+
+      <!-- Header (clickable) -->
+      <div class="topic-header d-flex align-items-center gap-3 p-3"
+           (click)="toggle(t)" role="button">
+        <span class="topic-num">{{ i + 1 }}</span>
+        <i class="bi {{ t.icon }} topic-icon"></i>
+        <span class="fw-bold flex-grow-1">{{ t.title }}</span>
+        <i class="bi" [ngClass]="t.expanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
+      </div>
+
+      <!-- Body -->
+      <div *ngIf="t.expanded" class="topic-body p-3 pt-0">
+        <p class="mb-0 topic-text">{{ t.summary }}</p>
+      </div>
+    </div>
+  </div>
+
 </div>

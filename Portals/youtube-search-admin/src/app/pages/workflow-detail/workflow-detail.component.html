@@ -1,0 +1,232 @@
+<div class="detail-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-bar mb-4" aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item">
+        <a routerLink="/" class="bc-link"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a routerLink="/workflows" class="bc-link"><i class="bi bi-diagram-2 me-1"></i>Workflows</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Workflow #{{ id }}</li>
+    </ol>
+  </nav>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded">
+    <div class="skeleton-hero mb-4"></div>
+    <div class="skeleton-block" style="height:320px"></div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="loaded && error" class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="back()">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </button>
+  </div>
+
+  <!-- Main content -->
+  <ng-container *ngIf="wf as w">
+
+    <!-- Hero card -->
+    <div class="hero-card card mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+          <div class="hero-icon" [ngClass]="wfBadgeClass(w.status)">
+            <i class="bi"
+               [ngClass]="{
+                 'bi-play-circle': w.status === 'started',
+                 'bi-arrow-repeat spin': w.status === 'running',
+                 'bi-check-circle-fill': w.status === 'completed',
+                 'bi-x-circle-fill': w.status === 'failed'
+               }"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <h3 class="fw-bold mb-0">Workflow #{{ w.id }}</h3>
+              <span class="status-pill" [ngClass]="wfBadgeClass(w.status)">{{ w.status | titlecase }}</span>
+            </div>
+            <p class="text-muted mb-0 small">
+              Started {{ w.started_at | date:'MMMM d, y \'at\' h:mm a' }}
+              &nbsp;·&nbsp;
+              <i class="bi bi-stopwatch me-1"></i>{{ duration(w) }}
+              &nbsp;·&nbsp;
+              <i class="bi bi-list-check me-1"></i>{{ w.task_count }} tasks
+            </p>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm align-self-start" (click)="back()">
+            <i class="bi bi-arrow-left me-1"></i>{{ backLabel }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: single column -->
+    <div class="d-flex flex-column gap-4">
+
+      <!-- Approach card -->
+      <div *ngIf="approach" class="card approach-card">
+        <div class="card-header section-header">
+          <i class="bi bi-diagram-3 me-2 text-ocean"></i>Approach
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <span class="fw-bold approach-name">{{ approach.name }}</span>
+            <span *ngIf="approach.category" class="badge bg-light text-secondary" style="font-size:.65rem">{{ approach.category }}</span>
+          </div>
+          <p *ngIf="approach.description" class="text-muted small mb-2">{{ approach.description }}</p>
+          <div class="font-monospace text-muted" style="font-size:.65rem;word-break:break-all">{{ approach.id }}</div>
+        </div>
+      </div>
+
+      <!-- Tasks table -->
+      <div class="card">
+        <div class="card-header section-header">
+          <i class="bi bi-list-check me-2 text-ocean"></i>
+          Workflow Tasks
+          <span class="badge bg-secondary ms-2">{{ tasksTotal }}</span>
+        </div>
+
+        <div *ngIf="tasks.length === 0 && loaded" class="card-body text-muted small p-4">
+          No task records found for this workflow.
+        </div>
+
+        <div *ngIf="tasks.length > 0">
+          <div class="table-responsive">
+            <table class="table table-hover tasks-table mb-0">
+              <thead>
+                <tr>
+                  <th class="tc-order">#</th>
+                  <th class="tc-name">Task</th>
+                  <th class="tc-file">File</th>
+                  <th class="tc-status">Status</th>
+                  <th class="tc-start">Started</th>
+                  <th class="tc-dur">Duration</th>
+                  <th class="tc-action"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of tasks"
+                    class="task-row"
+                    (click)="openTask(t.id)"
+                    role="button"
+                    title="View task details">
+                  <td class="tc-order text-muted">{{ t.task_order }}</td>
+                  <td class="tc-name fw-semibold">{{ t.task_id }}</td>
+                  <td class="tc-file">
+                    <span class="font-monospace task-file-text">{{ t.task_file }}</span>
+                  </td>
+                  <td class="tc-status">
+                    <span class="task-status-badge" [ngClass]="taskBadgeClass(t.status)">
+                      {{ t.status | titlecase }}
+                    </span>
+                  </td>
+                  <td class="tc-start text-muted small">
+                    {{ t.started_at ? (t.started_at | date:'h:mm:ss a') : '—' }}
+                  </td>
+                  <td class="tc-dur text-muted small">
+                    {{ t.duration_seconds != null ? t.duration_seconds + 's' : '—' }}
+                  </td>
+                  <td class="tc-action text-end">
+                    <i class="bi bi-chevron-right text-muted"></i>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Task pagination -->
+          <div *ngIf="tasksTotalPages > 1"
+               class="card-footer d-flex justify-content-between align-items-center py-2 px-3">
+            <small class="text-muted">Page {{ tasksPage }} of {{ tasksTotalPages }}</small>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="tasksPage === 1">
+                <a class="page-link" (click)="loadTasks(tasksPage - 1)">&#8249;</a>
+              </li>
+              <li *ngFor="let p of taskPages" class="page-item" [class.active]="p === tasksPage">
+                <a class="page-link" (click)="loadTasks(p)">{{ p }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="tasksPage === tasksTotalPages">
+                <a class="page-link" (click)="loadTasks(tasksPage + 1)">&#8250;</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflow Details accordion -->
+      <div class="card">
+        <div class="card-header section-header d-flex align-items-center"
+             (click)="detailsExpanded = !detailsExpanded" role="button" style="cursor:pointer">
+          <i class="bi bi-info-circle me-2 text-ocean"></i>Workflow Details
+          <i class="bi ms-auto"
+             [ngClass]="detailsExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </div>
+        <div *ngIf="detailsExpanded" class="card-body p-0">
+          <table class="detail-table">
+            <tr><td class="dt-key">WF ID</td><td class="dt-val font-monospace">#{{ w.id }}</td></tr>
+            <tr>
+              <td class="dt-key">Status</td>
+              <td class="dt-val">
+                <span class="status-pill sm" [ngClass]="wfBadgeClass(w.status)">{{ w.status | titlecase }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="dt-key">Approach</td>
+              <td class="dt-val">
+                <span class="fw-semibold small">{{ approach?.name ?? w.approach_id }}</span>
+                <div class="font-monospace text-muted" style="font-size:.62rem;word-break:break-all">{{ w.approach_id }}</div>
+              </td>
+            </tr>
+            <tr><td class="dt-key">Tasks</td><td class="dt-val">{{ w.task_count }}</td></tr>
+            <tr>
+              <td class="dt-key">Model ID</td>
+              <td class="dt-val">
+                <a *ngIf="w.model_id" [routerLink]="['/models', w.model_id]" class="text-ocean">#{{ w.model_id }}</a>
+                <span *ngIf="!w.model_id" class="text-muted">—</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="dt-key">Queue ID</td>
+              <td class="dt-val">
+                <a *ngIf="w.queue_item_id" [routerLink]="['/queue', w.queue_item_id]" class="text-ocean">#{{ w.queue_item_id }}</a>
+                <span *ngIf="!w.queue_item_id" class="text-muted">—</span>
+              </td>
+            </tr>
+            <tr><td class="dt-key">Duration</td><td class="dt-val">{{ duration(w) }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Timeline accordion -->
+      <div class="card">
+        <div class="card-header section-header d-flex align-items-center"
+             (click)="timelineExpanded = !timelineExpanded" role="button" style="cursor:pointer">
+          <i class="bi bi-clock-history me-2 text-ocean"></i>Timeline
+          <i class="bi ms-auto"
+             [ngClass]="timelineExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </div>
+        <div *ngIf="timelineExpanded" class="card-body p-0">
+          <table class="detail-table">
+            <tr><td class="dt-key">Started</td><td class="dt-val">{{ w.started_at | date:'medium' }}</td></tr>
+            <tr><td class="dt-key">Ended</td><td class="dt-val">{{ w.ended_at ? (w.ended_at | date:'medium') : '—' }}</td></tr>
+            <tr><td class="dt-key">Created</td><td class="dt-val">{{ w.created_at | date:'medium' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Error card -->
+      <div class="card border-danger" *ngIf="w.error_message">
+        <div class="card-header section-header text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Error Details
+        </div>
+        <div class="card-body">
+          <pre class="error-box mb-0">{{ w.error_message }}</pre>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+</div>

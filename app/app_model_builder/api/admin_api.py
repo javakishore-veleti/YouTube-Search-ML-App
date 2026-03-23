@@ -8,7 +8,9 @@ from fastapi import Request
 from app.app_common.app_status import get_status, set_status
 from app.app_common.cache.model_cache import ModelListCache
 from app.app_common.database.db_engine import SessionLocal
-from app.app_common.database.db_repo import ActivityRepository, ModelRepository
+from app.app_common.database.db_repo import (
+    ActivityRepository, ModelRepository, QueueRepository, WorkflowRepository,
+)
 from app.app_common.dtos.init_dtos import InitDTO
 from app.app_integrators.youtube.yt_client import YouTubeClient
 from app.app_model_approaches import load_approaches
@@ -157,6 +159,61 @@ class AdminAPI:
             repo = ModelRepository(session)
             versions = repo.get_versions(model_id)
             return [v.to_dict() for v in versions]
+        finally:
+            session.close()
+
+    def list_all_workflows(self, request: Request) -> dict:
+        page = int(request.query_params.get("page", 1))
+        page_size = int(request.query_params.get("page_size", 10))
+        page_size = max(1, min(page_size, 100))
+        page = max(1, page)
+        status_filter = request.query_params.get("status", None)
+        session = SessionLocal()
+        try:
+            return WorkflowRepository(session).list_all_wf(
+                page=page, page_size=page_size, status_filter=status_filter or None,
+            )
+        finally:
+            session.close()
+
+    def get_workflow_detail(self, request: Request) -> dict:
+        wf_id = int(request.path_params["wf_id"])
+        session = SessionLocal()
+        try:
+            wf = WorkflowRepository(session).get_wf(wf_id)
+            if not wf:
+                return {"error": "Workflow not found"}
+            return wf.to_dict()
+        finally:
+            session.close()
+
+    def get_task_detail(self, request: Request) -> dict:
+        task_id = int(request.path_params["task_id"])
+        session = SessionLocal()
+        try:
+            t = WorkflowRepository(session).get_task(task_id)
+            if not t:
+                return {"error": "Task not found"}
+            return t.to_dict()
+        finally:
+            session.close()
+
+    def get_model_workflows(self, request: Request) -> list:
+        model_id = int(request.path_params["model_id"])
+        session = SessionLocal()
+        try:
+            wfs = WorkflowRepository(session).list_wf_for_model(model_id)
+            return [w.to_dict() for w in wfs]
+        finally:
+            session.close()
+
+    def get_workflow_tasks(self, request: Request) -> dict:
+        wf_id     = int(request.path_params["wf_id"])
+        page      = int(request.query_params.get("page", 1))
+        page_size = int(request.query_params.get("page_size", 10))
+        session = SessionLocal()
+        try:
+            return WorkflowRepository(session).list_tasks(wf_id, page=page, page_size=page_size)
         finally:
             session.close()
 
@@ -321,4 +378,9 @@ class Initializer:
         app.add_api_route("/admin/models/build-request", endpoint=handler.submit_build_request, methods=["POST"])
         app.add_api_route("/admin/models/{model_id}", endpoint=handler.get_model, methods=["GET"])
         app.add_api_route("/admin/models/{model_id}/versions", endpoint=handler.get_model_versions, methods=["GET"])
+        app.add_api_route("/admin/workflows", endpoint=handler.list_all_workflows, methods=["GET"])
+        app.add_api_route("/admin/workflows/tasks/{task_id}", endpoint=handler.get_task_detail, methods=["GET"])
+        app.add_api_route("/admin/workflows/{wf_id}", endpoint=handler.get_workflow_detail, methods=["GET"])
+        app.add_api_route("/admin/workflows/{wf_id}/tasks", endpoint=handler.get_workflow_tasks, methods=["GET"])
+        app.add_api_route("/admin/models/{model_id}/workflows", endpoint=handler.get_model_workflows, methods=["GET"])
         app.add_api_route("/admin/videos/search", endpoint=handler.search_videos, methods=["POST"])

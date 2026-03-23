@@ -139,17 +139,94 @@ class ActivityLog(Base):
         }
 
 
+class ModelBuildWf(Base):
+    """Parent workflow record — one row per execution of a model approach."""
+    __tablename__ = "model_build_wf"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    model_id        = Column(Integer, ForeignKey("models.id"), nullable=True, index=True)
+    queue_item_id   = Column(Integer, ForeignKey("model_build_queue.id"), nullable=True, index=True)
+    approach_id     = Column(String(100), nullable=False)          # UUID from approaches.json
+    status          = Column(String(20), nullable=False, default="started", index=True)
+    # started / running / completed / failed
+    started_at      = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    ended_at        = Column(DateTime, nullable=True)
+    created_at      = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    error_message   = Column(Text, default="")
+
+    tasks = relationship("ModelBuildWfTask", back_populates="workflow",
+                         cascade="all, delete-orphan", order_by="ModelBuildWfTask.id")
+
+    def to_dict(self) -> dict:
+        return {
+            "id":            self.id,
+            "model_id":      self.model_id,
+            "queue_item_id": self.queue_item_id,
+            "approach_id":   self.approach_id,
+            "status":        self.status,
+            "started_at":    self.started_at.isoformat() if self.started_at else None,
+            "ended_at":      self.ended_at.isoformat()   if self.ended_at   else None,
+            "created_at":    self.created_at.isoformat() if self.created_at else None,
+            "error_message": self.error_message or "",
+            "task_count":    len(self.tasks) if self.tasks else 0,
+        }
+
+
+class ModelBuildWfTask(Base):
+    """Child task record — one row per task step inside a workflow run."""
+    __tablename__ = "model_build_wf_task"
+
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    wf_id            = Column(Integer, ForeignKey("model_build_wf.id"), nullable=False, index=True)
+    task_id          = Column(String(100), nullable=False)   # python class name e.g. Task01ExtractVideoIds
+    task_file        = Column(String(200), nullable=False, default="")  # relative path e.g. approach_01/tasks.py
+    task_order       = Column(Integer, nullable=False, default=0)
+    status           = Column(String(20), nullable=False, default="pending")
+    # pending / started / completed / failed / skipped
+    started_at       = Column(DateTime, nullable=True)
+    ended_at         = Column(DateTime, nullable=True)
+    status_updated_at= Column(DateTime, nullable=True,
+                               default=lambda: datetime.now(timezone.utc),
+                               onupdate=lambda: datetime.now(timezone.utc))
+    error_message    = Column(Text, default="")
+    output_data      = Column(Text, default="{}")  # JSON dict of task outputs
+
+    workflow = relationship("ModelBuildWf", back_populates="tasks")
+
+    def get_output_data(self) -> dict:
+        return json.loads(self.output_data or "{}")
+
+    def to_dict(self) -> dict:
+        dur = None
+        if self.started_at and self.ended_at:
+            dur = round((self.ended_at - self.started_at).total_seconds(), 2)
+        return {
+            "id":               self.id,
+            "wf_id":            self.wf_id,
+            "task_id":          self.task_id,
+            "task_file":        self.task_file,
+            "task_order":       self.task_order,
+            "status":           self.status,
+            "started_at":       self.started_at.isoformat()        if self.started_at        else None,
+            "ended_at":         self.ended_at.isoformat()          if self.ended_at          else None,
+            "status_updated_at":self.status_updated_at.isoformat() if self.status_updated_at else None,
+            "duration_seconds": dur,
+            "error_message":    self.error_message or "",
+            "output_data":      self.get_output_data(),
+        }
+
+
 class ModelBuildQueue(Base):
     __tablename__ = "model_build_queue"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     model_name = Column(String(200), nullable=False)
     approach_type = Column(String(50), nullable=False)
-    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, in_progress, completed, failed
-    notes = Column(Text, default="")  # user-facing notes
-    context_data = Column(Text, default="{}")  # JSON — extra context for model improvement
-    selected_videos = Column(Text, default="[]")  # JSON — list of video dicts
-    selected_sub_models = Column(Text, default="[]")  # JSON — always stored as list of selected sub-model ids
+    status = Column(String(20), nullable=False, default="pending", index=True)
+    notes = Column(Text, default="")
+    context_data = Column(Text, default="{}")
+    selected_videos = Column(Text, default="[]")
+    selected_sub_models = Column(Text, default="[]")
     publish_as_latest = Column(Boolean, default=False)
     user_id = Column(String(100), nullable=False, default="default")
     created_dt = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
@@ -177,5 +254,92 @@ class ModelBuildQueue(Base):
             "started_dt": self.started_dt.isoformat() if self.started_dt else None,
             "completed_dt": self.completed_dt.isoformat() if self.completed_dt else None,
             "error_message": self.error_message or "",
+        }
+
+
+class UserConversation(Base):
+    """A user's conversation tied to a model."""
+    __tablename__ = "user_conversation"
+
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    uuid              = Column(String(36), nullable=False, unique=True, index=True)
+    user_id           = Column(String(100), nullable=False, default="default", index=True)
+    conversation_name = Column(String(300), nullable=False)
+    model_id          = Column(Integer, ForeignKey("models.id"), nullable=True)
+    is_active         = Column(Boolean, nullable=False, default=False)
+    created_at        = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at        = Column(DateTime, nullable=False,
+                               default=lambda: datetime.now(timezone.utc),
+                               onupdate=lambda: datetime.now(timezone.utc))
+
+    model    = relationship("ModelRecord")
+    messages = relationship("UserConversationMessage", back_populates="conversation",
+                            cascade="all, delete-orphan", order_by="UserConversationMessage.created_at.desc()")
+    history  = relationship("UserConversationHistory", back_populates="conversation",
+                            cascade="all, delete-orphan", order_by="UserConversationHistory.snapshot_at.desc()")
+
+    def to_dict(self) -> dict:
+        return {
+            "id":                self.id,
+            "uuid":              self.uuid,
+            "user_id":           self.user_id,
+            "conversation_name": self.conversation_name,
+            "model_id":          self.model_id,
+            "model_name":        self.model.model_name if self.model else None,
+            "is_active":         self.is_active,
+            "message_count":     len(self.messages) if self.messages else 0,
+            "created_at":        self.created_at.isoformat() if self.created_at else None,
+            "updated_at":        self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class UserConversationMessage(Base):
+    """A single query + results entry inside a conversation."""
+    __tablename__ = "user_conversation_message"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    conversation_id = Column(Integer, ForeignKey("user_conversation.id"), nullable=False, index=True)
+    query           = Column(Text, nullable=False)
+    results_json    = Column(Text, nullable=False, default="[]")  # JSON array of search results
+    created_at      = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    conversation = relationship("UserConversation", back_populates="messages")
+
+    def get_results(self) -> list:
+        return json.loads(self.results_json or "[]")
+
+    def to_dict(self) -> dict:
+        return {
+            "id":              self.id,
+            "conversation_id": self.conversation_id,
+            "query":           self.query,
+            "results":         self.get_results(),
+            "created_at":      self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class UserConversationHistory(Base):
+    """Snapshot clone of user_conversation on every change."""
+    __tablename__ = "user_conversation_history"
+
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    conversation_id   = Column(Integer, ForeignKey("user_conversation.id"), nullable=False, index=True)
+    user_id           = Column(String(100), nullable=False)
+    conversation_name = Column(String(300), nullable=False)
+    model_id          = Column(Integer, nullable=True)
+    is_active         = Column(Boolean, nullable=False, default=False)
+    snapshot_at       = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    conversation = relationship("UserConversation", back_populates="history")
+
+    def to_dict(self) -> dict:
+        return {
+            "id":                self.id,
+            "conversation_id":   self.conversation_id,
+            "user_id":           self.user_id,
+            "conversation_name": self.conversation_name,
+            "model_id":          self.model_id,
+            "is_active":         self.is_active,
+            "snapshot_at":       self.snapshot_at.isoformat() if self.snapshot_at else None,
         }
 

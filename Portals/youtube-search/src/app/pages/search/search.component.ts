@@ -13,7 +13,7 @@ import { SearchService, SearchResult } from '../../services/search.service';
 })
 export class SearchComponent implements OnInit {
   models: ModelInfo[] = [];
-  selectedModelId = '';
+  selectedModelId: number | string = '';
   query = '';
   results: SearchResult[] = [];
   isLoading = false;
@@ -37,7 +37,7 @@ export class SearchComponent implements OnInit {
     if (!this.query.trim()) return;
     this.isLoading = true;
     this.hasSearched = true;
-    this.searchService.search(this.selectedModelId, this.query).subscribe(results => {
+    this.searchService.search(String(this.selectedModelId), this.query).subscribe(results => {
       this.results = results;
       this.isLoading = false;
     });

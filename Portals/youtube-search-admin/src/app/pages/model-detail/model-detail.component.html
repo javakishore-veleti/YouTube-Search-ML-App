@@ -63,10 +63,7 @@
     </div>
 
     <!-- Body -->
-    <div class="row g-4">
-
-      <!-- LEFT col: Approach + Videos + Versions -->
-      <div class="col-12 col-xl-8 d-flex flex-column gap-4">
+    <div class="d-flex flex-column gap-4">
 
         <!-- ── Approach info card ── -->
         <div *ngIf="approach" class="card approach-card">
@@ -243,57 +240,121 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- RIGHT col: Model details + Output results -->
-      <div class="col-12 col-xl-4 d-flex flex-column gap-4">
-
-        <!-- Model info -->
+        <!-- ── Workflow Runs (linked) ── -->
         <div class="card">
           <div class="card-header section-header">
-            <i class="bi bi-info-circle me-2 text-ocean"></i>Model Details
+            <i class="bi bi-diagram-2 me-2 text-ocean"></i>
+            Workflow Runs
+            <span class="badge bg-secondary ms-2">{{ workflows.length }}</span>
           </div>
-          <div class="card-body p-0">
-            <table class="detail-table">
-              <tr><td class="dt-key">Model ID</td><td class="dt-val font-monospace">#{{ m.id }}</td></tr>
-              <tr><td class="dt-key">Name</td><td class="dt-val fw-semibold">{{ m.model_name }}</td></tr>
-              <tr>
-                <td class="dt-key">Approach</td>
-                <td class="dt-val">
-                  <div class="fw-semibold small">{{ approach?.name ?? m.model_approach_type }}</div>
-                  <div *ngIf="approach?.category" class="text-muted" style="font-size:.68rem">{{ approach!.category }}</div>
-                  <div class="font-monospace text-muted" style="font-size:.62rem;word-break:break-all">{{ m.model_approach_type }}</div>
-                </td>
-              </tr>
-              <tr><td class="dt-key">Owner</td><td class="dt-val">{{ m.user_id }}</td></tr>
-              <tr>
-                <td class="dt-key">Latest Ver.</td>
-                <td class="dt-val"><span class="badge version-badge">v{{ m.latest_version }}</span></td>
-              </tr>
-              <tr><td class="dt-key">Videos</td><td class="dt-val">{{ m.video_count ?? allVideos(m).length }}</td></tr>
-              <tr><td class="dt-key">Versions</td><td class="dt-val">{{ versions(m).length }}</td></tr>
-              <tr><td class="dt-key">Created</td><td class="dt-val">{{ m.created_dt | date:'medium' }}</td></tr>
-              <tr><td class="dt-key">Updated</td><td class="dt-val">{{ m.updated_dt ? (m.updated_dt | date:'medium') : '—' }}</td></tr>
-            </table>
+
+          <div *ngIf="workflows.length === 0" class="card-body text-muted small p-4">
+            No workflow runs yet. Submit a build to see workflow execution history here.
+          </div>
+
+          <div *ngIf="workflows.length > 0" class="wf-list">
+            <a *ngFor="let wf of workflows; let wi = index"
+               class="wf-link-row d-flex align-items-center gap-2 p-3 text-decoration-none"
+               [routerLink]="['/workflows', wf.id]"
+               [queryParams]="{ from: 'model', modelId: id }">
+              <span class="wf-order flex-shrink-0">{{ wi + 1 }}</span>
+              <span class="wf-status-badge" [ngClass]="wfStatusClass(wf.status)">
+                {{ wf.status | titlecase }}
+              </span>
+              <span class="text-muted small ms-1">WF #{{ wf.id }}</span>
+              <span class="text-muted small ms-auto">
+                <i class="bi bi-clock me-1"></i>{{ wf.started_at | date:'MMM d, y h:mm a' }}
+              </span>
+              <span class="text-muted small ms-2">
+                <i class="bi bi-stopwatch me-1"></i>{{ wfDuration(wf) }}
+              </span>
+              <span class="text-muted small ms-2">
+                <i class="bi bi-list-check me-1"></i>{{ wf.task_count }} tasks
+              </span>
+              <i class="bi bi-chevron-right ms-2 text-muted"></i>
+            </a>
           </div>
         </div>
 
-        <!-- Output results (only if has meaningful data) -->
-        <div class="card" *ngIf="objectEntries(m.output_results).length > 0">
-          <div class="card-header section-header">
-            <i class="bi bi-graph-up me-2 text-ocean"></i>Output Results
-          </div>
-          <div class="card-body p-0">
-            <table class="detail-table">
-              <tr *ngFor="let e of objectEntries(m.output_results)">
-                <td class="dt-key">{{ e.key }}</td>
-                <td class="dt-val font-monospace">{{ e.value }}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
+    </div>
 
+    <!-- ── Bottom accordions: Model Details & Output Results (full width) ── -->
+    <div class="d-flex flex-column gap-4 mt-4">
+
+      <!-- Model Details accordion -->
+      <div class="card">
+        <div class="card-header section-header d-flex align-items-center"
+             (click)="detailsExpanded = !detailsExpanded" role="button" style="cursor:pointer">
+          <i class="bi bi-info-circle me-2 text-ocean"></i>Model Details
+          <i class="bi ms-auto"
+             [ngClass]="detailsExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </div>
+        <div *ngIf="detailsExpanded" class="card-body p-0">
+          <table class="detail-table">
+            <tr><td class="dt-key">Model ID</td><td class="dt-val font-monospace">#{{ m.id }}</td></tr>
+            <tr><td class="dt-key">Name</td><td class="dt-val fw-semibold">{{ m.model_name }}</td></tr>
+            <tr>
+              <td class="dt-key">Approach</td>
+              <td class="dt-val">
+                <div class="fw-semibold small">{{ approach?.name ?? m.model_approach_type }}</div>
+                <div *ngIf="approach?.category" class="text-muted" style="font-size:.68rem">{{ approach!.category }}</div>
+                <div class="font-monospace text-muted" style="font-size:.62rem;word-break:break-all">{{ m.model_approach_type }}</div>
+              </td>
+            </tr>
+            <tr><td class="dt-key">Owner</td><td class="dt-val">{{ m.user_id }}</td></tr>
+            <tr>
+              <td class="dt-key">Latest Ver.</td>
+              <td class="dt-val"><span class="badge version-badge">v{{ m.latest_version }}</span></td>
+            </tr>
+            <tr><td class="dt-key">Videos</td><td class="dt-val">{{ m.video_count ?? allVideos(m).length }}</td></tr>
+            <tr><td class="dt-key">Versions</td><td class="dt-val">{{ versions(m).length }}</td></tr>
+            <tr><td class="dt-key">WF Runs</td><td class="dt-val">{{ workflows.length }}</td></tr>
+            <tr><td class="dt-key">Created</td><td class="dt-val">{{ m.created_dt | date:'medium' }}</td></tr>
+            <tr><td class="dt-key">Updated</td><td class="dt-val">{{ m.updated_dt ? (m.updated_dt | date:'medium') : '—' }}</td></tr>
+          </table>
+        </div>
       </div>
+
+      <!-- Output Results accordion with pagination -->
+      <div class="card" *ngIf="objectEntries(m.output_results).length > 0">
+        <div class="card-header section-header d-flex align-items-center"
+             (click)="outputExpanded = !outputExpanded" role="button" style="cursor:pointer">
+          <i class="bi bi-graph-up me-2 text-ocean"></i>Output Results
+          <span class="badge bg-secondary ms-2">{{ objectEntries(m.output_results).length }}</span>
+          <i class="bi ms-auto"
+             [ngClass]="outputExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </div>
+        <div *ngIf="outputExpanded">
+          <div class="card-body p-0">
+            <table class="detail-table">
+              <tr *ngFor="let e of pagedOutputEntries(m)">
+                <td class="dt-key">{{ e.key }}</td>
+                <td class="dt-val font-monospace" style="word-break:break-all">{{ e.value }}</td>
+              </tr>
+            </table>
+          </div>
+          <div *ngIf="outputTotalPages(m) > 1"
+               class="card-footer d-flex justify-content-between align-items-center py-2 px-3"
+               style="border-radius:0 0 12px 12px">
+            <small class="text-muted">
+              {{ (outputPage - 1) * outputPageSize + 1 }}–{{ outputPageEnd(m) }}
+              of {{ objectEntries(m.output_results).length }}
+            </small>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="outputPage === 1">
+                <a class="page-link" (click)="setOutputPage(outputPage - 1)">&#8249;</a>
+              </li>
+              <li *ngFor="let p of outputPages(m)" class="page-item" [class.active]="p === outputPage">
+                <a class="page-link" (click)="setOutputPage(p)">{{ p }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="outputPage === outputTotalPages(m)">
+                <a class="page-link" (click)="setOutputPage(outputPage + 1)">&#8250;</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
     </div>
   </ng-container>
 </div>

@@ -85,10 +85,10 @@ def _dataset_dir(request_uuid: str) -> Path:
 def _model_dir(request_uuid: str) -> Path:
     return (
         Path.home()
-        / "runtime_data" / "Models"
+        / "runtime_data" / "DataSets"
         / "YouTube-Search-ML-App" / "Approach-01"
         / request_uuid
-        / "final-embedding-model"
+        / "latest" / "final-embedding-model"
     )
 
 

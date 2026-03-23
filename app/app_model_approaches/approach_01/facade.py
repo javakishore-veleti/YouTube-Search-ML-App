@@ -1,11 +1,3 @@
-"""
-Approach 01 – Facade
-====================
-Entry point that the pipeline engine calls.
-Delegates all build logic to BuildEmbeddingModelWorkflow.
-
-Pattern: Facade → Workflow → Tasks  (all stateless singletons)
-"""
 from __future__ import annotations
 
 import logging
@@ -28,8 +20,10 @@ class Facade(IModelApproach):
     ----------------------------------------------------
     video_ids        : List[str | dict]  – YouTube video IDs (required)
     base_model_key   : str               – sub-model UUID or slug (optional)
-    yt_api_key       : str               – YouTube Data API key (optional, falls back to env)
-    request_uuid     : str               – stable UUID for this run (optional, auto-generated)
+    yt_api_key       : str               – YouTube Data API key (optional)
+    request_uuid     : str               – stable UUID for this run (optional)
+    model_id         : int               – DB model record ID (optional, set by scheduler)
+    queue_item_id    : int               – DB queue item ID  (optional, set by scheduler)
     """
 
     _instance: "Facade | None" = None
@@ -40,22 +34,22 @@ class Facade(IModelApproach):
             cls._instance._workflow = BuildEmbeddingModelWorkflow()
         return cls._instance
 
-    # ------------------------------------------------------------------
-    # IModelApproach
-    # ------------------------------------------------------------------
-
     def build_model(self, req: ModelBuildRequest) -> ModelBuildResponse:
         """Run the full 7-step workflow and return the result."""
         ctx: dict = {}
+        model_id      = req.input_criteria.get("model_id")
+        queue_item_id = req.input_criteria.get("queue_item_id")
         try:
-            ctx = self._workflow.run(req, ctx)
+            ctx = self._workflow.run(req, ctx,
+                                     model_id=model_id,
+                                     queue_item_id=queue_item_id)
         except Exception as exc:
             logger.exception("[Facade] build_model failed: %s", exc)
             return ModelBuildResponse(
                 model_name=req.model_name,
                 approach_type=APPROACH_TYPE,
                 status="failed",
-                output_results={"error": str(exc)},
+                output_results={"error": str(exc), "wf_id": ctx.get("wf_id")},
             )
 
         return ModelBuildResponse(

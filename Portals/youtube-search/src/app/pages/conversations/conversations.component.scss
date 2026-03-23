@@ -1,0 +1,67 @@
+:host { display: block; }
+
+.conv-page { max-width: 900px; margin: 0 auto; }
+
+.text-coral { color: #FF6B6B !important; }
+.text-muted-warm { color: #7a6e6e !important; }
+
+.btn-coral {
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  color: #fff; border: none; font-weight: 600;
+  &:hover:not(:disabled) { background: linear-gradient(135deg, #e85d5d, #e07a47); color: #fff; transform: translateY(-1px); }
+  &:disabled { opacity: .7; }
+}
+
+/* New conv form */
+.new-conv-card {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff9e6 100%);
+  border-radius: 16px; border: 1px solid #ffd6d6;
+}
+.custom-input, .custom-select {
+  border-radius: 10px; border: 2px solid #ffd6d6; padding: .5rem .75rem;
+  &:focus { border-color: #FF6B6B; box-shadow: 0 0 0 3px rgba(255,107,107,.15); }
+}
+
+/* Conversation cards */
+.conv-grid { display: flex; flex-direction: column; gap: .5rem; }
+
+.conv-card {
+  background: #fff; border: 1px solid #f0ebe6; border-radius: 14px;
+  cursor: pointer; transition: all .15s;
+  &:hover { background: #fef5f0; border-color: #ffd6d6; transform: translateX(3px); }
+}
+.conv-active {
+  border-left: 4px solid #FF6B6B; background: #fff8f6;
+}
+
+.conv-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: #fff0ee; color: #FF6B6B;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.conv-active .conv-icon { background: #FF6B6B; color: #fff; }
+
+.conv-name {
+  font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 400px;
+}
+
+.badge-active {
+  background: #FF6B6B; color: #fff; font-size: .62rem; font-weight: 700;
+  border-radius: 99px; padding: 2px 8px;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 260px; text-align: center;
+}
+
+/* Skeleton */
+.skeleton-card {
+  height: 70px; border-radius: 14px;
+  background: linear-gradient(90deg,#f5eeea 25%,#faf5f2 50%,#f5eeea 75%);
+  background-size: 400% 100%; animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0 50%} }

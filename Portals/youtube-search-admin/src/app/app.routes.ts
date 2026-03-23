@@ -5,6 +5,9 @@ import { BuildQueueComponent } from './pages/build-queue/build-queue.component';
 import { QueueDetailComponent } from './pages/queue-detail/queue-detail.component';
 import { ModelsComponent } from './pages/models/models.component';
 import { ModelDetailComponent } from './pages/model-detail/model-detail.component';
+import { WorkflowsComponent } from './pages/workflows/workflows.component';
+import { WorkflowDetailComponent } from './pages/workflow-detail/workflow-detail.component';
+import { WorkflowTaskDetailComponent } from './pages/workflow-task-detail/workflow-task-detail.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 
 export const routes: Routes = [
@@ -14,6 +17,9 @@ export const routes: Routes = [
   { path: 'queue/:id', component: QueueDetailComponent },
   { path: 'models', component: ModelsComponent },
   { path: 'models/:id', component: ModelDetailComponent },
+  { path: 'workflows', component: WorkflowsComponent },
+  { path: 'workflows/:id', component: WorkflowDetailComponent },
+  { path: 'workflows/:id/tasks/:taskId', component: WorkflowTaskDetailComponent },
   { path: 'settings', component: SettingsComponent },
   { path: '**', redirectTo: '' }
 ];

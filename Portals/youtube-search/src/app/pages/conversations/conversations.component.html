@@ -1,0 +1,94 @@
+<div class="conv-page p-4">
+
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-chat-square-text me-2 text-coral"></i>Vid Conversations</h2>
+      <p class="text-muted-warm mb-0 small">Your conversations tied to ML models. Select one or create a new one.</p>
+    </div>
+    <button class="btn btn-coral rounded-pill px-4" (click)="toggleNewForm()">
+      <i class="bi me-1" [ngClass]="showNewForm ? 'bi-x-lg' : 'bi-plus-lg'"></i>
+      {{ showNewForm ? 'Cancel' : 'New Conversation' }}
+    </button>
+  </div>
+
+  <!-- New conversation inline form -->
+  <div *ngIf="showNewForm" class="new-conv-card p-4 mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Create New Conversation</h6>
+    <div class="row g-3">
+      <div class="col-md-5">
+        <label class="form-label fw-semibold small">Conversation Name</label>
+        <input class="form-control custom-input" placeholder="e.g. ML Tutorial Search"
+               [(ngModel)]="newName" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small">Model</label>
+        <select class="form-select custom-select" [(ngModel)]="newModelId">
+          <option [ngValue]="null">No model selected</option>
+          <option *ngFor="let m of models" [ngValue]="m.id">{{ m.model_name }}</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-coral w-100 rounded-pill" (click)="createConversation()"
+                [disabled]="!newName.trim()">
+          <i class="bi bi-check-lg me-1"></i>Create
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- Skeleton -->
+  <div *ngIf="!loaded">
+    <div *ngFor="let _ of [1,2,3]" class="skeleton-card mb-3"></div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="loaded && conversations.length === 0 && !showNewForm" class="empty-state">
+    <i class="bi bi-chat-square-text display-3 text-muted"></i>
+    <p class="fw-semibold mt-3 mb-1">No conversations yet</p>
+    <small class="text-muted-warm">Click "New Conversation" to get started.</small>
+  </div>
+
+  <!-- Conversation cards -->
+  <div *ngIf="loaded && conversations.length > 0" class="conv-grid">
+    <div *ngFor="let c of conversations"
+         class="conv-card d-flex align-items-start gap-3 p-3"
+         [class.conv-active]="c.is_active"
+         (click)="openConversation(c)"
+         role="button">
+
+      <!-- Icon -->
+      <div class="conv-icon flex-shrink-0">
+        <i class="bi" [ngClass]="c.is_active ? 'bi-chat-square-text-fill' : 'bi-chat-square-text'"></i>
+      </div>
+
+      <!-- Info -->
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="fw-bold conv-name">{{ c.conversation_name }}</span>
+          <span *ngIf="c.is_active" class="badge badge-active">Active</span>
+        </div>
+        <div class="text-muted-warm small">
+          <i class="bi bi-cpu me-1"></i>{{ modelName(c.model_id) }}
+          <span class="mx-2">·</span>
+          {{ c.updated_at | date:'MMM d, y h:mm a' }}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-1 flex-shrink-0">
+        <button *ngIf="!c.is_active" class="btn btn-sm btn-outline-secondary rounded-pill"
+                (click)="activate(c, $event)" title="Set as active">
+          <i class="bi bi-check-circle"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger rounded-pill"
+                (click)="deleteConversation(c, $event)" title="Delete">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

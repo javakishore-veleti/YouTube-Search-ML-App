@@ -107,6 +107,50 @@ export interface Approach {
   };
 }
 
+export interface BuildWf {
+  id: number;
+  model_id: number | null;
+  queue_item_id: number | null;
+  approach_id: string;
+  status: string;        // started | running | completed | failed
+  started_at: string;
+  ended_at: string | null;
+  created_at: string;
+  error_message: string;
+  task_count: number;
+}
+
+export interface BuildWfTask {
+  id: number;
+  wf_id: number;
+  task_id: string;       // python class name e.g. Task01ExtractVideoIds
+  task_file: string;
+  task_order: number;
+  status: string;        // pending | started | completed | failed | skipped
+  started_at: string | null;
+  ended_at: string | null;
+  status_updated_at: string | null;
+  duration_seconds: number | null;
+  error_message: string;
+  output_data: Record<string, any>;
+}
+
+export interface PaginatedWorkflows {
+  items: BuildWf[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface PaginatedWfTasks {
+  items: BuildWfTask[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export interface ModelVideo {
   video_id: string;
   title: string;
@@ -212,5 +256,29 @@ export class BuilderService {
 
   getModelVersions(modelId: number): Observable<ModelVersion[]> {
     return this.http.get<ModelVersion[]>(`${this.apiUrl}/admin/models/${modelId}/versions`);
+  }
+
+  getModelWorkflows(modelId: number): Observable<BuildWf[]> {
+    return this.http.get<BuildWf[]>(`${this.apiUrl}/admin/models/${modelId}/workflows`);
+  }
+
+  getWorkflowTasks(wfId: number, page = 1, pageSize = 10): Observable<PaginatedWfTasks> {
+    return this.http.get<PaginatedWfTasks>(`${this.apiUrl}/admin/workflows/${wfId}/tasks`, {
+      params: { page: page.toString(), page_size: pageSize.toString() }
+    });
+  }
+
+  getAllWorkflows(page: number = 1, pageSize: number = 10, status?: string): Observable<PaginatedWorkflows> {
+    const params: any = { page: page.toString(), page_size: pageSize.toString() };
+    if (status) params.status = status;
+    return this.http.get<PaginatedWorkflows>(`${this.apiUrl}/admin/workflows`, { params });
+  }
+
+  getWorkflow(wfId: number): Observable<BuildWf> {
+    return this.http.get<BuildWf>(`${this.apiUrl}/admin/workflows/${wfId}`);
+  }
+
+  getTaskDetail(taskId: number): Observable<BuildWfTask> {
+    return this.http.get<BuildWfTask>(`${this.apiUrl}/admin/workflows/tasks/${taskId}`);
   }
 }
