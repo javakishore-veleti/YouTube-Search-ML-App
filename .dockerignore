@@ -1,0 +1,97 @@
+# Git
+.git/
+.gitignore
+
+# Python bytecode
+__pycache__/
+*.py[codz]
+*$py.class
+
+# Environments & secrets
+.env
+.envrc
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite databases (rebuilt at runtime)
+*.db
+*.db-journal
+app/data/*.db
+app/data/conversations/
+
+# Logs
+logs/
+*.log
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+sdist/
+develop-eggs/
+.eggs/
+
+# Test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+.pytest_cache/
+.hypothesis/
+coverage.xml
+nosetests.xml
+
+# Node (rebuilt in container)
+node_modules/
+Portals/youtube-search/node_modules/
+Portals/youtube-search/dist/
+Portals/youtube-search/.angular/
+Portals/youtube-search-admin/node_modules/
+Portals/youtube-search-admin/dist/
+Portals/youtube-search-admin/.angular/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+.pytype/
+.ruff_cache/
+cython_debug/
+
+# Cursor / AI tools
+.cursorignore
+.cursorindexingignore
+.abstra/
+
+# Runtime data (large model files)
+runtime_data/
+
+# Claude memory (dev-only)
+.claude/
+
+# Misc
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+LICENSE
+README.md
+CLAUDE.md
