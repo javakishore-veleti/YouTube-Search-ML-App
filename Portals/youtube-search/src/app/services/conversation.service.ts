@@ -87,4 +87,10 @@ export class ConversationService {
   addMessage(id: number, query: string, results: any[]): Observable<any> {
     return this.http.post(`${this.api}/conversations/${id}/messages`, { query, results });
   }
+
+  search(id: number, query: string): Observable<{ results: any[]; query: string; status: string }> {
+    return this.http.post<{ results: any[]; query: string; status: string }>(
+      `${this.api}/conversations/${id}/search`, { query }
+    );
+  }
 }

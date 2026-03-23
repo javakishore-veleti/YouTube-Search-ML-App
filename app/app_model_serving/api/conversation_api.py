@@ -4,8 +4,10 @@ import logging
 from fastapi import Request
 
 from app.app_common.database.db_engine import SessionLocal
-from app.app_common.database.db_repo import ConversationRepository
+from app.app_common.database.db_repo import ConversationRepository, ModelRepository
 from app.app_common.dtos.init_dtos import InitDTO
+from app.app_common.model_approaches.dtos import ConversationSearchRequest
+from app.app_model_approaches import get_conversation_facade
 from app.app_model_serving import conversation_storage
 
 logger = logging.getLogger(__name__)
@@ -133,6 +135,64 @@ class ConversationAPI:
         finally:
             session.close()
 
+    async def search(self, request: Request) -> dict:
+        """Execute a real search using the conversation's model and approach."""
+        cid = int(request.path_params["id"])
+        body = await request.json()
+        query = body.get("query", "").strip()
+        if not query:
+            return {"error": "query is required"}
+
+        session = SessionLocal()
+        try:
+            conv_repo = ConversationRepository(session)
+            conv = conv_repo.get(cid)
+            if not conv:
+                return {"error": "Conversation not found"}
+            if not conv.model_id:
+                return {"error": "No model selected for this conversation"}
+
+            model_record = ModelRepository(session).get_model(conv.model_id)
+            if not model_record:
+                return {"error": "Model not found"}
+
+            output = model_record.get_output_results()
+            model_location = output.get("model_location", "")
+            transformed_parquet = output.get("transformed_parquet", "")
+            embeddings_path = output.get("embeddings_path", "")
+            base_model_id = output.get("base_model_id", "")
+            embedding_dim = output.get("embedding_dim", 384)
+
+            if not model_location or not embeddings_path:
+                return {"error": "Model has not been built yet (no artefacts found)"}
+
+            # get conversation-specific settings (fallback to defaults)
+            settings = conv.get_settings()
+            dist_name = settings.get("dist_name", "manhattan")
+            threshold = float(settings.get("threshold", 40.0))
+            top_k = int(settings.get("top_k", 5))
+
+            # get approach conversation facade
+            facade = get_conversation_facade(model_record.model_approach_type)
+            if not facade:
+                return {"error": f"No conversation facade for approach '{model_record.model_approach_type}'"}
+
+            search_req = ConversationSearchRequest(
+                query=query,
+                model_location=model_location,
+                transformed_parquet=transformed_parquet,
+                embeddings_path=embeddings_path,
+                base_model_id=base_model_id,
+                embedding_dim=embedding_dim,
+                dist_name=dist_name,
+                threshold=threshold,
+                top_k=top_k,
+            )
+            response = facade.search(search_req)
+            return {"results": response.results, "query": response.query, "status": response.status}
+        finally:
+            session.close()
+
 
 class Initializer:
     def initialize(self, dto: InitDTO) -> None:
@@ -145,5 +205,6 @@ class Initializer:
         app.add_api_route("/conversations/{id}",          endpoint=handler.update_conversation, methods=["PUT"])
         app.add_api_route("/conversations/{id}",          endpoint=handler.delete_conversation, methods=["DELETE"])
         app.add_api_route("/conversations/{id}/activate", endpoint=handler.activate_conversation, methods=["PUT"])
+        app.add_api_route("/conversations/{id}/search",   endpoint=handler.search, methods=["POST"])
         app.add_api_route("/conversations/{id}/messages", endpoint=handler.list_messages, methods=["GET"])
         app.add_api_route("/conversations/{id}/messages", endpoint=handler.add_message, methods=["POST"])

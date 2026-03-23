@@ -60,4 +60,156 @@
           - Store this location in the model request table for future reference and use.
           - Generate an UUID string for this model request and store it in the model request table for future reference and tracking.
           - Also store it in the model_approaches table which Python api will use to show in the UI
+
+---
+
+## Build Artefacts Summary
+
+After a successful build, the following artefacts exist under
+`~/runtime_data/DataSets/YouTube-Search-ML-App/Approach-01/<request_uuid>/`:
+
+| File | Created By | Contents |
+|------|-----------|----------|
+| `video-transcripts.parquet` | Task 04 | Raw DataFrame — columns: `video_id`, `description`, `transcript` |
+| `video-transcripts-transformed.parquet` | Task 05 | Cleaned DataFrame — adds: `description_clean`, `transcript_clean`, `text` |
+| `embeddings.npy` | Task 06 | Numpy array shape `(sentence_count, embedding_dim)` — one embedding per row in the DataFrame |
+| `latest/final-embedding-model/` | Task 07 | Full SentenceTransformer model directory (config, tokenizer, weights) |
+
+The `ModelRecord.output_results` JSON stores all artefact paths:
+```json
+{
+  "request_uuid": "<uuid>",
+  "base_model_key": "<sub-model uuid>",
+  "base_model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "video_count": 5,
+  "sentence_count": 5,
+  "embedding_dim": 384,
+  "raw_parquet": "/path/to/video-transcripts.parquet",
+  "transformed_parquet": "/path/to/video-transcripts-transformed.parquet",
+  "embeddings_path": "/path/to/embeddings.npy",
+  "model_location": "/path/to/latest/final-embedding-model"
+}
+```
+
+---
+
+## Workflow DB Tracking
+
+Every build run creates:
+- One `model_build_wf` row (parent) — links to `model_id`, `queue_item_id`, tracks status + timing
+- One `model_build_wf_task` row per task (child) — tracks task_id (Python class name), task_file, task_order, status, timing, and `output_data` JSON capturing new/changed context keys after each task
+
+Status values: `started` → `running` → `completed` | `failed`
+Task status values: `pending` → `started` → `completed` | `failed` | `skipped`
+
+Implementation: `app/app_model_approaches/approach_01/workflow.py` — `BuildEmbeddingModelWorkflow` class
+The `_extract_output()` helper captures serialisable ctx diffs (skips DataFrames, model objects, private `_` keys).
+
+---
+
+## Conversation Search (Inference)
+
+### Architecture
+
+Each approach has a `conversations/` sub-module implementing `IConversationFacade`:
+- Interface: `app/app_common/model_approaches/interfaces.py` → `IConversationFacade`
+- DTOs: `app/app_common/model_approaches/dtos.py` → `ConversationSearchRequest`, `ConversationSearchResponse`
+- Approach 01 impl: `app/app_model_approaches/approach_01/conversations/facade.py` → `ConversationFacade`
+- Loader: `app/app_model_approaches/__init__.py` → `get_conversation_facade(approach_id)`
+
+### How It Works
+
+1. User sends a query from the conversation detail page (`POST /conversations/{id}/search`)
+2. Backend resolves: `conversation.model_id` → `ModelRecord` → `output_results` (artefact paths) + `model_approach_type`
+3. `get_conversation_facade(approach_type)` dynamically imports `approach_01.conversations.facade.ConversationFacade`
+4. A `ConversationSearchRequest` is built with query, artefact paths, and conversation settings (dist_name, threshold, top_k)
+5. The facade executes the search and returns ranked results
+
+### Search Algorithm
+
+```text
+1. Load artefacts (lazily cached in memory per model_location):
+   - SentenceTransformer model from model_location
+   - Embeddings numpy array from embeddings_path
+   - Transformed DataFrame from transformed_parquet
+
+2. Encode query:
+   query_embedding = model.encode(query).reshape(1, -1)
+
+3. Compute distances:
+   dist = DistanceMetric.get_metric(dist_name)   # default: "manhattan"
+   dist_arr = dist.pairwise(embeddings, query_embedding).flatten()
+
+4. Filter and rank:
+   idx_below = argwhere(dist_arr < threshold)     # default threshold: 40.0
+   idx_sorted = idx_below[argsort(dist_arr[idx_below])][:top_k]  # default top_k: 5
+
+5. Return matching rows from DataFrame (video_id, description, thumbnail URL, score)
+```
+
+### Distance Metrics
+
+The `dist_name` setting on each conversation controls which sklearn `DistanceMetric` is used. Supported metrics for real-valued vectors:
+
+| Identifier | Class | Formula |
+|-----------|-------|---------|
+| `"manhattan"` (default) | ManhattanDistance | `sum(\|x - y\|)` |
+| `"euclidean"` | EuclideanDistance | `sqrt(sum((x - y)^2))` |
+| `"chebyshev"` | ChebyshevDistance | `max(\|x - y\|)` |
+| `"minkowski"` | MinkowskiDistance | `sum(w * \|x - y\|^p)^(1/p)` |
+| `"cosine"` | Not in DistanceMetric — use `scipy` or `1 - cosine_similarity` instead |
+
+Manhattan distance is the default because it works well with high-dimensional sentence embeddings and is computationally efficient.
+
+### Conversation Settings
+
+Stored in `user_conversation.settings_json` (default `{}`):
+```json
+{
+  "dist_name": "manhattan",
+  "threshold": 40.0,
+  "top_k": 5
+}
+```
+
+These are per-conversation overrides. If not set, the facade uses the defaults above.
+
+### Caching
+
+The `ConversationFacade` caches loaded models, embeddings, and DataFrames in a class-level dict keyed by `model_location`. This means:
+- First query for a model is slow (loads ~130MB SentenceTransformer + embeddings + parquet)
+- Subsequent queries against the same model are fast (in-memory lookup + encode + distance compute)
+- Cache persists for the lifetime of the FastAPI process
+
+### API Endpoint
+
+```
+POST /conversations/{id}/search
+Body: { "query": "how to train a neural network" }
+Response: {
+  "results": [
+    {
+      "title": "...",
+      "video_id": "abc123",
+      "description": "...",
+      "channel": "",
+      "thumbnail": "https://img.youtube.com/vi/abc123/mqdefault.jpg",
+      "score": 12.45
+    }
+  ],
+  "query": "how to train a neural network",
+  "status": "ok"
+}
+```
+
+### Adding Conversation Search to a New Approach
+
+To add conversation search for approach_02 (or any new approach):
+
+1. Create `app/app_model_approaches/approach_02/conversations/__init__.py` (empty)
+2. Create `app/app_model_approaches/approach_02/conversations/facade.py`:
+   - Class `ConversationFacade` implementing `IConversationFacade`
+   - Stateless singleton pattern (same as approach_01)
+   - Implement `search(req: ConversationSearchRequest) -> ConversationSearchResponse`
+3. The loader `get_conversation_facade()` will automatically discover it via the `package` field in `approaches.json`
                     

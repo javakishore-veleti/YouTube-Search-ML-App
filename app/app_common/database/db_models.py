@@ -267,6 +267,7 @@ class UserConversation(Base):
     conversation_name = Column(String(300), nullable=False)
     model_id          = Column(Integer, ForeignKey("models.id"), nullable=True)
     is_active         = Column(Boolean, nullable=False, default=False)
+    settings_json     = Column(Text, default="{}")  # JSON: dist_name, threshold, top_k
     created_at        = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at        = Column(DateTime, nullable=False,
                                default=lambda: datetime.now(timezone.utc),
@@ -278,6 +279,9 @@ class UserConversation(Base):
     history  = relationship("UserConversationHistory", back_populates="conversation",
                             cascade="all, delete-orphan", order_by="UserConversationHistory.snapshot_at.desc()")
 
+    def get_settings(self) -> dict:
+        return json.loads(self.settings_json or "{}")
+
     def to_dict(self) -> dict:
         return {
             "id":                self.id,
@@ -287,6 +291,7 @@ class UserConversation(Base):
             "model_id":          self.model_id,
             "model_name":        self.model.model_name if self.model else None,
             "is_active":         self.is_active,
+            "settings":          self.get_settings(),
             "message_count":     len(self.messages) if self.messages else 0,
             "created_at":        self.created_at.isoformat() if self.created_at else None,
             "updated_at":        self.updated_at.isoformat() if self.updated_at else None,

@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from app.app_common.model_approaches.interfaces import IModelApproach
+from app.app_common.model_approaches.interfaces import IConversationFacade, IModelApproach
 
 
 def load_approaches() -> List[Dict[str, Any]]:
@@ -21,3 +21,17 @@ def get_facade(approach_id: str) -> Optional[IModelApproach]:
     module = importlib.import_module(f"app.app_model_approaches.{pkg}.facade")
     facade_cls = getattr(module, "Facade")
     return facade_cls()
+
+
+def get_conversation_facade(approach_id: str) -> Optional[IConversationFacade]:
+    approaches = load_approaches()
+    match = next((a for a in approaches if a["id"] == approach_id), None)
+    if not match:
+        return None
+    pkg = match["package"]
+    try:
+        module = importlib.import_module(f"app.app_model_approaches.{pkg}.conversations.facade")
+        cls = getattr(module, "ConversationFacade")
+        return cls()
+    except (ImportError, AttributeError):
+        return None

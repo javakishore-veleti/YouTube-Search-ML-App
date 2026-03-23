@@ -2,7 +2,10 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
-    from app.app_common.model_approaches.dtos import ModelBuildRequest, ModelBuildResponse
+    from app.app_common.model_approaches.dtos import (
+        ModelBuildRequest, ModelBuildResponse,
+        ConversationSearchRequest, ConversationSearchResponse,
+    )
 
 
 class IModelApproach(ABC):
@@ -42,6 +45,17 @@ class IModelWorkflow(ABC):
         -------
         dict – the final populated context bag.
         """
+        ...
+
+
+class IConversationFacade(ABC):
+    """
+    Interface for conversation search within an approach.
+    Implementations must be stateless singletons.
+    """
+
+    @abstractmethod
+    def search(self, req: "ConversationSearchRequest") -> "ConversationSearchResponse":
         ...
 
 

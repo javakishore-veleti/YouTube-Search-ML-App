@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ConversationService, Conversation, ConversationMessage } from '../../services/conversation.service';
 import { ModelService, ModelInfo } from '../../services/model.service';
-import { SearchService, SearchResult } from '../../services/search.service';
 import { environment } from '../../environments/environment';
 
 interface Approach {
@@ -54,7 +53,6 @@ export class ConversationDetailComponent implements OnInit {
     private router: Router,
     private svc: ConversationService,
     private modelSvc: ModelService,
-    private searchSvc: SearchService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef
   ) {}
@@ -114,18 +112,17 @@ export class ConversationDetailComponent implements OnInit {
   onSearch(): void {
     if (!this.query.trim() || !this.conv?.model_id) return;
     this.isSearching = true;
-    this.searchSvc.search(String(this.conv.model_id), this.query).subscribe({
-      next: (results: SearchResult[]) => {
-        const resultDicts = results.map(r => ({
-          title: r.title, channel: r.channel,
-          thumbnail: r.thumbnail, videoId: r.videoId,
-          description: r.description,
-        }));
-        this.svc.addMessage(this.id, this.query, resultDicts).subscribe(() => {
+    const q = this.query;
+    this.svc.search(this.id, q).subscribe({
+      next: (res) => {
+        const results = res.results || [];
+        // save message with results to conversation history
+        this.svc.addMessage(this.id, q, results).subscribe(() => {
           this.query = '';
           this.isSearching = false;
           this.historyExpanded = true;
           this.loadMessages(1);
+          this.loadConv(); // refresh message count
         });
       },
       error: () => { this.isSearching = false; this.cdr.detectChanges(); }
