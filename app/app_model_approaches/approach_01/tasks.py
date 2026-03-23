@@ -26,6 +26,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List
@@ -185,12 +186,12 @@ class Task02FetchVideoData(IModelTask):
                 except Exception as exc:
                     logger.warning("[Task02] Description fetch failed for %s: %s", video_id, exc)
 
-            # Transcript via youtube-transcript-api v1.x
+            # Transcript via youtube-transcript-api v1.x (English only)
             try:
                 fetched = yt_api.fetch(video_id)
                 transcript_text = " ".join(seg.text for seg in fetched)
             except (NoTranscriptFound, TranscriptsDisabled) as exc:
-                logger.warning("[Task02] No transcript for %s: %s", video_id, exc)
+                logger.warning("[Task02] No English transcript for %s: %s", video_id, exc)
             except Exception as exc:
                 logger.warning("[Task02] Transcript error for %s: %s", video_id, exc)
 
@@ -198,7 +199,35 @@ class Task02FetchVideoData(IModelTask):
             logger.info("[Task02] video_id=%s  desc=%d chars  transcript=%d chars",
                         video_id, len(description), len(transcript_text))
 
+            # Brief pause between videos to avoid YouTube IP rate-limiting
+            if len(video_ids) > 1:
+                time.sleep(1.0)
+
+        # Compute content quality stats
+        desc_lengths = [len(r["description"]) for r in records]
+        trans_lengths = [len(r["transcript"]) for r in records]
+        has_desc = [r for r in records if r["description"].strip()]
+        has_trans = [r for r in records if r["transcript"].strip()]
+        has_both = [r for r in records if r["description"].strip() and r["transcript"].strip()]
+        has_neither = [r for r in records if not r["description"].strip() and not r["transcript"].strip()]
+
         ctx["raw_records"] = records
+        ctx["content_stats"] = {
+            "total_videos": len(records),
+            "videos_with_description": len(has_desc),
+            "videos_with_transcript": len(has_trans),
+            "videos_with_both": len(has_both),
+            "videos_with_neither": len(has_neither),
+            "description_length_min": min(desc_lengths) if desc_lengths else 0,
+            "description_length_max": max(desc_lengths) if desc_lengths else 0,
+            "transcript_length_min": min(trans_lengths) if trans_lengths else 0,
+            "transcript_length_max": max(trans_lengths) if trans_lengths else 0,
+            "skipped_video_ids": [r["video_id"] for r in has_neither],
+        }
+        logger.info(
+            "[Task02] Content stats: %d/%d have description, %d/%d have transcript, %d skipped (no content)",
+            len(has_desc), len(records), len(has_trans), len(records), len(has_neither),
+        )
         return ctx
 
 
@@ -271,12 +300,21 @@ class Task05TransformData(IModelTask):
         df["transcript_clean"] = df["transcript"].fillna("").apply(_clean_text)
         df["text"] = (df["description_clean"] + " " + df["transcript_clean"]).str.strip()
 
+        # Drop rows with empty text — videos with no transcript AND no description
+        # are useless for embedding-based search and would cause a row misalignment
+        # between the parquet (N rows) and embeddings.npy (fewer rows) in Task 06.
+        before = len(df)
+        df = df[df["text"].astype(bool)].reset_index(drop=True)
+        dropped = before - len(df)
+        if dropped:
+            logger.warning("[Task05] Dropped %d video(s) with empty text (no transcript or description)", dropped)
+
         transformed_parquet = ctx["dataset_dir"] / "video-transcripts-transformed.parquet"
         df.to_parquet(transformed_parquet, index=False, engine="pyarrow")
 
         ctx["df_transformed"] = df
         ctx["transformed_parquet"] = str(transformed_parquet)
-        logger.info("[Task05] Transformed parquet saved → %s", transformed_parquet)
+        logger.info("[Task05] Transformed parquet saved → %s (%d rows)", transformed_parquet, len(df))
         return ctx
 
 

@@ -68,6 +68,7 @@ class Facade(IModelApproach):
                 "transformed_parquet":   ctx.get("transformed_parquet"),
                 "embeddings_path":       ctx.get("embeddings_path"),
                 "model_location":        ctx.get("model_location"),
+                "content_stats":         ctx.get("content_stats", {}),
             },
         )
 

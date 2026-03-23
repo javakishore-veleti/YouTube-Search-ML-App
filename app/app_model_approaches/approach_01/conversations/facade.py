@@ -6,17 +6,9 @@ query, computes distance, and returns the top-k closest videos.
 
 Stateless singleton — model artefacts are lazily loaded and cached in memory.
 
-Threshold strategy
-------------------
-A fixed threshold doesn't work because:
-- Different metrics produce different score ranges
-- Models built from few videos have narrow distance bands
-- A threshold of 40 is meaningless for Bray-Curtis (max 1.0)
-
-Solution: compute the distance between all video pairs in the index to get the
-"baseline" distance distribution. Then set the effective threshold as a
-percentile of that baseline. Queries that are closer than most video-to-video
-distances are relevant; queries further away are not.
+Threshold strategy: Uses the 20th percentile of inter-video pairwise distances
+as the adaptive threshold. This ensures only queries that are closer than
+80% of video-to-video pairs are considered relevant.
 """
 from __future__ import annotations
 
@@ -36,21 +28,21 @@ from app.app_common.model_approaches.interfaces import IConversationFacade
 
 logger = logging.getLogger(__name__)
 
-# Hard-coded fallback thresholds per metric (used only when baseline can't be computed)
+# Fallback thresholds when baseline can't be computed (e.g. single-video model)
 METRIC_FALLBACK_THRESHOLDS: Dict[str, float] = {
-    "manhattan":   20.0,
-    "euclidean":    5.0,
-    "chebyshev":    0.5,
-    "minkowski":   20.0,
-    "seuclidean":   5.0,
-    "canberra":    60.0,
-    "braycurtis":   0.2,
-    "hamming":      0.5,
+    "manhattan":   15.0,
+    "euclidean":    4.0,
+    "chebyshev":    0.4,
+    "minkowski":   15.0,
+    "seuclidean":   4.0,
+    "canberra":    50.0,
+    "braycurtis":   0.15,
+    "hamming":      0.4,
 }
 
-# Adaptive threshold multiplier: effective_threshold = mean_inter_video_distance * MULTIPLIER
-# 1.5x means query must be at most 50% further than the average video-to-video distance
-BASELINE_MULTIPLIER = 1.5
+# Percentile of inter-video distances to use as adaptive threshold.
+# 20th percentile means: query must be closer than 80% of video-to-video distances.
+BASELINE_PERCENTILE = 20
 
 
 class ConversationFacade(IConversationFacade):
@@ -61,7 +53,7 @@ class ConversationFacade(IConversationFacade):
 
     _instance: Optional["ConversationFacade"] = None
     _cache: Dict[str, Tuple[SentenceTransformer, np.ndarray, pd.DataFrame]] = {}
-    _baseline_cache: Dict[str, Dict[str, float]] = {}  # model_location → {metric → threshold}
+    _baseline_cache: Dict[str, float] = {}
 
     def __new__(cls) -> "ConversationFacade":
         if cls._instance is None:
@@ -76,10 +68,27 @@ class ConversationFacade(IConversationFacade):
             model = SentenceTransformer(req.model_location)
             embeddings = np.load(req.embeddings_path)
             df = pd.read_parquet(req.transformed_parquet)
-            self._cache[key] = (model, embeddings, df)
+
+            # FIX: align DataFrame to embeddings by filtering out rows with empty text
+            # Task06 skips empty text when encoding, so embeddings has fewer rows than df
+            # if any videos had no transcript/description
+            non_empty_mask = df["text"].fillna("").str.strip().astype(bool)
+            df_aligned = df[non_empty_mask].reset_index(drop=True)
+
+            if len(df_aligned) != embeddings.shape[0]:
+                logger.warning(
+                    "[ConvFacade] Alignment mismatch even after filtering: "
+                    "df=%d rows, embeddings=%d rows. Truncating to min.",
+                    len(df_aligned), embeddings.shape[0],
+                )
+                n = min(len(df_aligned), embeddings.shape[0])
+                df_aligned = df_aligned.iloc[:n]
+                embeddings = embeddings[:n]
+
+            self._cache[key] = (model, embeddings, df_aligned)
             logger.info(
-                "[ConvFacade] Cached — embeddings shape=%s, df shape=%s",
-                embeddings.shape, df.shape,
+                "[ConvFacade] Cached — embeddings shape=%s, df shape=%s (aligned)",
+                embeddings.shape, df_aligned.shape,
             )
         return self._cache[key]
 
@@ -87,12 +96,11 @@ class ConversationFacade(IConversationFacade):
                                      dist_name: str, model_location: str) -> float:
         """
         Compute the adaptive threshold from the actual distance distribution
-        of the video index. Uses BASELINE_MULTIPLIER * mean inter-video distance.
+        of the video index. Uses the BASELINE_PERCENTILE of all pairwise
+        inter-video distances.
 
-        This adapts automatically to:
-        - The number of videos (small models have narrow distance bands)
-        - The distance metric (Manhattan ~20, Bray-Curtis ~0.3, etc.)
-        - The embedding dimensionality
+        For a 17-video Manhattan model this gives ~15.9 (p20), which correctly
+        passes "AI engineering" (13.6) but rejects "STUPID" (20.4).
         """
         cache_key = f"{model_location}:{dist_name}"
         if cache_key in self._baseline_cache:
@@ -100,24 +108,20 @@ class ConversationFacade(IConversationFacade):
 
         dist = DistanceMetric.get_metric(dist_name)
         pairwise = dist.pairwise(embeddings)
-        # extract upper triangle (exclude diagonal zeros)
         n = pairwise.shape[0]
         upper = pairwise[np.triu_indices(n, k=1)]
 
         if len(upper) == 0:
-            # single video — can't compute baseline
-            threshold = METRIC_FALLBACK_THRESHOLDS.get(dist_name, 20.0)
+            threshold = METRIC_FALLBACK_THRESHOLDS.get(dist_name, 15.0)
         else:
-            mean_dist = float(np.mean(upper))
-            threshold = mean_dist * BASELINE_MULTIPLIER
-            # safety: don't let threshold be zero or negative
+            threshold = float(np.percentile(upper, BASELINE_PERCENTILE))
             if threshold <= 0:
-                threshold = METRIC_FALLBACK_THRESHOLDS.get(dist_name, 20.0)
+                threshold = METRIC_FALLBACK_THRESHOLDS.get(dist_name, 15.0)
 
         self._baseline_cache[cache_key] = threshold
         logger.info(
-            "[ConvFacade] Baseline threshold for %s/%s: %.4f (from %d pairs, %.1fx mean)",
-            dist_name, model_location[-30:], threshold, len(upper), BASELINE_MULTIPLIER,
+            "[ConvFacade] Baseline threshold for %s: %.4f (p%d of %d pairs)",
+            dist_name, threshold, BASELINE_PERCENTILE, len(upper),
         )
         return threshold
 
@@ -131,23 +135,20 @@ class ConversationFacade(IConversationFacade):
         dist = DistanceMetric.get_metric(req.dist_name)
         dist_arr = dist.pairwise(embeddings, query_embedding).flatten()
 
-        # determine effective threshold
-        # use adaptive baseline unless user explicitly set a small metric-appropriate value
+        # determine effective threshold: stricter of user setting and adaptive baseline
         baseline = self._compute_baseline_threshold(embeddings, req.dist_name, req.model_location)
-        user_threshold = req.threshold
+        effective = min(req.threshold, baseline)
 
-        # if user threshold is clearly from the wrong scale, use baseline
-        # otherwise use the stricter of (user, baseline) to prevent false positives
-        effective = min(user_threshold, baseline)
         logger.info(
             "[ConvFacade] metric=%s user_threshold=%.2f baseline=%.4f effective=%.4f",
-            req.dist_name, user_threshold, baseline, effective,
+            req.dist_name, req.threshold, baseline, effective,
         )
 
         # filter by threshold and keep top_k
         idx_below = np.argwhere(dist_arr < effective).flatten()
         if len(idx_below) == 0:
-            logger.info("[ConvFacade] No results below threshold=%.4f", effective)
+            logger.info("[ConvFacade] No results below threshold=%.4f for query='%s'",
+                        effective, req.query[:60])
             return ConversationSearchResponse(results=[], query=req.query)
 
         idx_sorted = idx_below[np.argsort(dist_arr[idx_below])][:req.top_k]
