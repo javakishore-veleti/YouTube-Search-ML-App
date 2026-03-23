@@ -62,9 +62,10 @@ class ConversationAPI:
         body = await request.json()
         name = body.get("conversation_name")
         model_id = body.get("model_id")
+        settings = body.get("settings")
         session = SessionLocal()
         try:
-            conv = ConversationRepository(session).update(cid, name=name, model_id=model_id)
+            conv = ConversationRepository(session).update(cid, name=name, model_id=model_id, settings=settings)
             if not conv:
                 return {"error": "Not found"}
             return {"status": "updated", "conversation": conv.to_dict()}

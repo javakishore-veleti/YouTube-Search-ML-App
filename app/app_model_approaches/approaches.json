@@ -27,6 +27,47 @@
           "embedding_dim": 768
         }
       ]
+    },
+    "conversation_settings": {
+      "fields": [
+        {
+          "key": "dist_name",
+          "label": "Distance Metric",
+          "type": "dropdown",
+          "default": "manhattan",
+          "description": "How similarity between your query and video content is measured. Each metric calculates 'distance' differently — lower distance means a closer match. IMPORTANT: each metric has a different score range, so the threshold must match the metric. The system applies sensible defaults automatically if your threshold is mis-scaled.",
+          "options": [
+            { "value": "manhattan",   "label": "Manhattan (City Block) — Scores range 0–200+. Default threshold: 40. Best all-round choice." },
+            { "value": "euclidean",   "label": "Euclidean (Straight Line) — Scores range 0–50+. Default threshold: 8. Good for precise topic matching." },
+            { "value": "chebyshev",   "label": "Chebyshev (Max Diff) — Scores range 0–2+. Default threshold: 0.8. Requires relevance across all aspects." },
+            { "value": "minkowski",   "label": "Minkowski (Generalised) — Scores range 0–200+. Default threshold: 40. Tuneable between Manhattan and Euclidean." },
+            { "value": "seuclidean",  "label": "Standardised Euclidean — Scores range 0–50+. Default threshold: 8. Adjusts for feature variance." },
+            { "value": "canberra",    "label": "Canberra — Scores range 0–384. Default threshold: 100. Sensitive to subtle differences." },
+            { "value": "braycurtis",  "label": "Bray-Curtis — Scores range 0–1. Default threshold: 0.3. Good for proportional comparison." },
+            { "value": "hamming",     "label": "Hamming — Scores range 0–1. Default threshold: 0.8. Counts differing dimensions." }
+          ]
+        },
+        {
+          "key": "threshold",
+          "label": "Distance Threshold",
+          "type": "number",
+          "default": 40,
+          "min": 0.01,
+          "max": 500,
+          "step": 0.01,
+          "description": "Only videos scoring BELOW this number are returned. The right value depends on your distance metric: Manhattan uses 20–80, Euclidean uses 3–15, Bray-Curtis/Chebyshev use 0.1–0.8 (scores are 0–1). If you set a threshold that doesn't match your metric's scale, the system will automatically use a safe default. Tip: start with the metric's default and adjust up to see more results or down for stricter filtering."
+        },
+        {
+          "key": "top_k",
+          "label": "Max Results",
+          "type": "number",
+          "default": 5,
+          "min": 1,
+          "max": 25,
+          "step": 1,
+          "description": "Maximum number of results per search. Even if many videos pass the threshold, only the closest N are shown. Set to 3 for focused answers, 10–15 for broader exploration."
+        }
+      ]
     }
   },
   {

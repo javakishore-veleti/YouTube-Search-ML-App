@@ -21,41 +21,75 @@
     </div>
   </div>
 
-  <!-- Table of Contents -->
-  <div class="toc-card p-4 mb-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-bookmark me-2 text-coral"></i>How It Works</h5>
-    <p class="text-muted-warm small mb-3">VidSage uses several ML techniques to understand your queries and find the best videos. Click any topic to learn more.</p>
-    <div class="toc-list">
-      <a *ngFor="let t of topics; let i = index"
-         class="toc-item d-flex align-items-center gap-2"
-         (click)="scrollTo(t.id)" role="button">
-        <span class="toc-num">{{ i + 1 }}</span>
-        <i class="bi {{ t.icon }} text-coral"></i>
-        <span>{{ t.title }}</span>
-      </a>
-    </div>
+  <!-- Approach selector -->
+  <div class="approach-selector-card p-4 mb-4" *ngIf="approaches.length > 0">
+    <h5 class="fw-bold mb-1"><i class="bi bi-diagram-3 me-2 text-coral"></i>How It Works</h5>
+    <p class="text-muted-warm small mb-3">Select an approach to learn what ML techniques it uses and how your searches are powered.</p>
+
+    <select class="form-select custom-select" [(ngModel)]="selectedApproachId"
+            (ngModelChange)="onApproachChange()">
+      <option *ngFor="let a of approaches" [value]="a.id">{{ a.name }}</option>
+    </select>
   </div>
 
-  <!-- Topic accordions -->
-  <div class="topics-section">
-    <div *ngFor="let t of topics; let i = index"
-         [id]="t.id"
-         class="topic-card mb-3">
+  <!-- Selected approach detail -->
+  <ng-container *ngIf="currentApproach as sa">
 
-      <!-- Header (clickable) -->
-      <div class="topic-header d-flex align-items-center gap-3 p-3"
-           (click)="toggle(t)" role="button">
-        <span class="topic-num">{{ i + 1 }}</span>
-        <i class="bi {{ t.icon }} topic-icon"></i>
-        <span class="fw-bold flex-grow-1">{{ t.title }}</span>
-        <i class="bi" [ngClass]="t.expanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
-      </div>
-
-      <!-- Body -->
-      <div *ngIf="t.expanded" class="topic-body p-3 pt-0">
-        <p class="mb-0 topic-text">{{ t.summary }}</p>
+    <!-- Approach header -->
+    <div class="approach-hero p-4 mb-4">
+      <div class="d-flex align-items-start gap-3">
+        <div class="approach-icon-lg"><i class="bi bi-cpu-fill"></i></div>
+        <div>
+          <h4 class="fw-bold mb-1">{{ sa.name }}</h4>
+          <span *ngIf="sa.category" class="badge bg-coral-light text-coral rounded-pill mb-2">{{ sa.category }}</span>
+          <p *ngIf="sa.description" class="text-muted-warm small mb-0">{{ sa.description }}</p>
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- Overview text -->
+    <div *ngIf="detail.overview" class="overview-card p-4 mb-4">
+      <p class="mb-0 overview-text">{{ detail.overview }}</p>
+    </div>
+
+    <!-- No content for this approach -->
+    <div *ngIf="topics.length === 0" class="text-center py-5">
+      <i class="bi bi-tools display-4" style="color:#ffd6d6"></i>
+      <p class="mt-3 text-muted-warm">Detailed documentation for this approach is coming soon.</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc-card p-4 mb-4" *ngIf="topics.length > 0">
+      <h6 class="fw-bold mb-3"><i class="bi bi-bookmark me-2 text-coral"></i>ML Techniques Used</h6>
+      <div class="toc-list">
+        <a *ngFor="let t of topics; let i = index"
+           class="toc-item d-flex align-items-center gap-2"
+           (click)="scrollTo(t.id)" role="button">
+          <span class="toc-num">{{ i + 1 }}</span>
+          <i class="bi {{ t.icon }} text-coral"></i>
+          <span>{{ t.title }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Topic accordions -->
+    <div class="topics-section">
+      <div *ngFor="let t of topics; let i = index"
+           [id]="t.id"
+           class="topic-card mb-3">
+        <div class="topic-header d-flex align-items-center gap-3 p-3"
+             (click)="toggle(t)" role="button">
+          <span class="topic-num">{{ i + 1 }}</span>
+          <i class="bi {{ t.icon }} topic-icon"></i>
+          <span class="fw-bold flex-grow-1">{{ t.title }}</span>
+          <i class="bi" [ngClass]="t.expanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
+        </div>
+        <div *ngIf="t.expanded" class="topic-body p-3 pt-0">
+          <p class="mb-0 topic-text">{{ t.summary }}</p>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
 
 </div>

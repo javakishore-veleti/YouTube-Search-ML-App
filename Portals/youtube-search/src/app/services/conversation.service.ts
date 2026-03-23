@@ -11,6 +11,7 @@ export interface Conversation {
   model_id: number | null;
   model_name: string | null;
   is_active: boolean;
+  settings: Record<string, any>;
   message_count: number;
   created_at: string;
   updated_at: string;
@@ -62,10 +63,11 @@ export class ConversationService {
     });
   }
 
-  update(id: number, name?: string, modelId?: number): Observable<any> {
+  update(id: number, name?: string, modelId?: number, settings?: Record<string, any>): Observable<any> {
     const body: any = {};
     if (name !== undefined) body.conversation_name = name;
     if (modelId !== undefined) body.model_id = modelId;
+    if (settings !== undefined) body.settings = settings;
     return this.http.put(`${this.api}/conversations/${id}`, body);
   }
 

@@ -7,11 +7,31 @@ import { ConversationService, Conversation, ConversationMessage } from '../../se
 import { ModelService, ModelInfo } from '../../services/model.service';
 import { environment } from '../../environments/environment';
 
+interface SettingFieldOption {
+  value: string;
+  label: string;
+}
+
+interface SettingField {
+  key: string;
+  label: string;
+  type: string;       // dropdown | number | text | checkbox | radio | multi-select
+  default?: any;
+  options?: SettingFieldOption[];
+  min?: number;
+  max?: number;
+  step?: number;
+  description?: string;
+}
+
 interface Approach {
   id: string;
   name: string;
   category?: string;
   description?: string;
+  conversation_settings?: {
+    fields: SettingField[];
+  };
 }
 
 @Component({
@@ -45,8 +65,13 @@ export class ConversationDetailComponent implements OnInit {
   messagesLoading = false;
   historyExpanded = false;
 
-  // settings accordion
+  // accordions
   settingsExpanded = false;
+  convSettingsExpanded = false;
+
+  // dynamic conversation settings form (keyed by field.key)
+  convSettingsForm: Record<string, any> = {};
+  settingsDirty = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -63,7 +88,9 @@ export class ConversationDetailComponent implements OnInit {
 
     this.modelSvc.getModels().subscribe(m => { this.models = m; this.cdr.detectChanges(); });
     this.http.get<Approach[]>(`${environment.apiBaseUrl}/admin/approaches`).subscribe(a => {
-      this.approaches = a; this.cdr.detectChanges();
+      this.approaches = a;
+      this.initConvSettingsForm();
+      this.cdr.detectChanges();
     });
     this.loadConv();
     this.loadMessages(1);
@@ -71,7 +98,12 @@ export class ConversationDetailComponent implements OnInit {
 
   loadConv(): void {
     this.svc.get(this.id).subscribe({
-      next: (c) => { this.conv = c; this.loaded = true; this.cdr.detectChanges(); },
+      next: (c) => {
+        this.conv = c;
+        this.loaded = true;
+        this.initConvSettingsForm();
+        this.cdr.detectChanges();
+      },
       error: () => { this.error = 'Could not load conversation.'; this.loaded = true; this.cdr.detectChanges(); }
     });
   }
@@ -108,6 +140,33 @@ export class ConversationDetailComponent implements OnInit {
   }
   cancelEditName(): void { this.editingName = false; }
 
+  // ── Dynamic conversation settings ───────────────
+  get convSettingsFields(): SettingField[] {
+    const approach = this.selectedApproach();
+    return approach?.conversation_settings?.fields ?? [];
+  }
+
+  initConvSettingsForm(): void {
+    const fields = this.convSettingsFields;
+    const saved = this.conv?.settings ?? {};
+    this.convSettingsForm = {};
+    for (const f of fields) {
+      this.convSettingsForm[f.key] = saved[f.key] ?? f.default ?? '';
+    }
+    this.settingsDirty = false;
+  }
+
+  onConvSettingChange(): void {
+    this.settingsDirty = true;
+  }
+
+  saveConvSettings(): void {
+    this.svc.update(this.id, undefined, undefined, this.convSettingsForm).subscribe(() => {
+      this.settingsDirty = false;
+      this.loadConv();
+    });
+  }
+
   // ── Search + save to conversation ───────────────
   onSearch(): void {
     if (!this.query.trim() || !this.conv?.model_id) return;
@@ -116,13 +175,12 @@ export class ConversationDetailComponent implements OnInit {
     this.svc.search(this.id, q).subscribe({
       next: (res) => {
         const results = res.results || [];
-        // save message with results to conversation history
         this.svc.addMessage(this.id, q, results).subscribe(() => {
           this.query = '';
           this.isSearching = false;
           this.historyExpanded = true;
           this.loadMessages(1);
-          this.loadConv(); // refresh message count
+          this.loadConv();
         });
       },
       error: () => { this.isSearching = false; this.cdr.detectChanges(); }
@@ -157,5 +215,17 @@ export class ConversationDetailComponent implements OnInit {
 
   copyText(text: string): void {
     navigator.clipboard.writeText(text);
+  }
+
+  toggleMultiSelect(key: string, value: string): void {
+    const arr: string[] = this.convSettingsForm[key] || [];
+    const idx = arr.indexOf(value);
+    if (idx >= 0) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(value);
+    }
+    this.convSettingsForm[key] = [...arr];
+    this.onConvSettingChange();
   }
 }

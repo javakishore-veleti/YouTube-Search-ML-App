@@ -465,7 +465,8 @@ class ConversationRepository:
         return conv
 
     def update(self, conversation_id: int, name: Optional[str] = None,
-               model_id: Optional[int] = None) -> Optional[UserConversation]:
+               model_id: Optional[int] = None,
+               settings: Optional[dict] = None) -> Optional[UserConversation]:
         conv = self.get(conversation_id)
         if not conv:
             return None
@@ -473,6 +474,8 @@ class ConversationRepository:
             conv.conversation_name = name
         if model_id is not None:
             conv.model_id = model_id
+        if settings is not None:
+            conv.settings_json = json.dumps(settings)
         conv.updated_at = datetime.now(timezone.utc)
         self._clone_to_history(conv)
         self.session.commit()

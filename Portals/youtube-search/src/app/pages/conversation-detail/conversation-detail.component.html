@@ -67,14 +67,14 @@
     </div>
 
     <!-- Conversation Settings accordion (collapsed by default) -->
-    <div class="settings-card mb-4">
-      <div class="settings-header d-flex align-items-center gap-2 p-3"
+    <div class="accordion-card mb-4">
+      <div class="accordion-header d-flex align-items-center gap-2 p-3"
            (click)="settingsExpanded = !settingsExpanded" role="button">
         <i class="bi bi-gear me-1 text-muted-warm"></i>
         <span class="fw-semibold small">Conversation Settings</span>
         <i class="bi ms-auto" [ngClass]="settingsExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
       </div>
-      <div *ngIf="settingsExpanded" class="settings-body p-3 pt-0">
+      <div *ngIf="settingsExpanded" class="accordion-body p-3 pt-0">
         <table class="settings-table">
           <tr>
             <td class="sk">Created</td>
@@ -101,9 +101,83 @@
       </div>
     </div>
 
+    <!-- Approach-specific Conversation Configuration (dynamic from approaches.json) -->
+    <div class="accordion-card mb-4" *ngIf="convSettingsFields.length > 0">
+      <div class="accordion-header d-flex align-items-center gap-2 p-3"
+           (click)="convSettingsExpanded = !convSettingsExpanded" role="button">
+        <i class="bi bi-sliders me-1 text-coral"></i>
+        <span class="fw-semibold small">Search Configuration</span>
+        <span *ngIf="settingsDirty" class="badge bg-warning text-dark ms-1" style="font-size:.58rem">Unsaved</span>
+        <i class="bi ms-auto" [ngClass]="convSettingsExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
+      </div>
+      <div *ngIf="convSettingsExpanded" class="accordion-body p-3 pt-0">
+
+        <div *ngFor="let f of convSettingsFields" class="setting-field mb-3">
+          <label class="form-label fw-semibold small mb-1">{{ f.label }}</label>
+          <div *ngIf="f.description" class="text-muted-warm mb-1" style="font-size:.72rem">{{ f.description }}</div>
+
+          <!-- Dropdown -->
+          <select *ngIf="f.type === 'dropdown'" class="form-select form-select-sm custom-select"
+                  [(ngModel)]="convSettingsForm[f.key]" (ngModelChange)="onConvSettingChange()">
+            <option *ngFor="let opt of f.options" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+
+          <!-- Number -->
+          <input *ngIf="f.type === 'number'" type="number" class="form-control form-control-sm custom-input"
+                 [(ngModel)]="convSettingsForm[f.key]" (ngModelChange)="onConvSettingChange()"
+                 [attr.min]="f.min" [attr.max]="f.max" [attr.step]="f.step" />
+
+          <!-- Text -->
+          <input *ngIf="f.type === 'text'" type="text" class="form-control form-control-sm custom-input"
+                 [(ngModel)]="convSettingsForm[f.key]" (ngModelChange)="onConvSettingChange()"
+                 placeholder="Enter value..." />
+
+          <!-- Textarea -->
+          <textarea *ngIf="f.type === 'textarea'" class="form-control form-control-sm custom-input" rows="2"
+                    [(ngModel)]="convSettingsForm[f.key]" (ngModelChange)="onConvSettingChange()"
+                    placeholder="Enter value..."></textarea>
+
+          <!-- Radio buttons -->
+          <div *ngIf="f.type === 'radio'" class="d-flex flex-column gap-1 mt-1">
+            <label *ngFor="let opt of f.options" class="form-check d-flex align-items-center gap-2">
+              <input type="radio" class="form-check-input" [name]="f.key"
+                     [value]="opt.value" [(ngModel)]="convSettingsForm[f.key]"
+                     (ngModelChange)="onConvSettingChange()" />
+              <span class="small">{{ opt.label }}</span>
+            </label>
+          </div>
+
+          <!-- Checkbox (boolean toggle) -->
+          <div *ngIf="f.type === 'checkbox'" class="form-check mt-1">
+            <input type="checkbox" class="form-check-input"
+                   [(ngModel)]="convSettingsForm[f.key]" (ngModelChange)="onConvSettingChange()" />
+            <label class="form-check-label small">{{ f.label }}</label>
+          </div>
+
+          <!-- Multi-select (checkboxes for multiple values) -->
+          <div *ngIf="f.type === 'multi-select'" class="d-flex flex-column gap-1 mt-1">
+            <label *ngFor="let opt of f.options" class="form-check d-flex align-items-center gap-2">
+              <input type="checkbox" class="form-check-input"
+                     [checked]="(convSettingsForm[f.key] || []).includes(opt.value)"
+                     (change)="toggleMultiSelect(f.key, opt.value)" />
+              <span class="small">{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="d-flex justify-content-end mt-2">
+          <button class="btn btn-sm btn-coral rounded-pill px-4"
+                  (click)="saveConvSettings()" [disabled]="!settingsDirty">
+            <i class="bi bi-check-lg me-1"></i>Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Chat history accordion (collapsed by default) -->
-    <div class="history-card">
-      <div class="history-header d-flex align-items-center gap-2 p-3"
+    <div class="accordion-card">
+      <div class="accordion-header d-flex align-items-center gap-2 p-3"
            (click)="historyExpanded = !historyExpanded" role="button">
         <i class="bi bi-clock-history me-1 text-coral"></i>
         <span class="fw-semibold small">Conversation History</span>
@@ -111,7 +185,7 @@
         <i class="bi ms-auto" [ngClass]="historyExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:#aaa"></i>
       </div>
 
-      <div *ngIf="historyExpanded" class="history-body p-3 pt-0">
+      <div *ngIf="historyExpanded" class="accordion-body p-3 pt-0">
 
         <div *ngIf="messagesLoading && messages.length === 0" class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-coral" role="status"></div>
@@ -123,14 +197,9 @@
           <p class="mt-2 text-muted-warm small">No messages yet.</p>
         </div>
 
-        <!-- Messages (newest first) -->
         <div *ngFor="let msg of messages" class="chat-entry mb-4">
-
-          <!-- User query bubble -->
           <div class="query-bubble d-flex gap-2 mb-2">
-            <div class="bubble-icon user-icon flex-shrink-0">
-              <i class="bi bi-person-fill"></i>
-            </div>
+            <div class="bubble-icon user-icon flex-shrink-0"><i class="bi bi-person-fill"></i></div>
             <div class="flex-grow-1">
               <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="fw-semibold small">You</span>
@@ -143,28 +212,22 @@
             </div>
           </div>
 
-          <!-- Results bubble -->
           <div class="results-bubble d-flex gap-2">
-            <div class="bubble-icon ai-icon flex-shrink-0">
-              <i class="bi bi-cpu-fill"></i>
-            </div>
+            <div class="bubble-icon ai-icon flex-shrink-0"><i class="bi bi-cpu-fill"></i></div>
             <div class="flex-grow-1">
               <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="fw-semibold small text-coral">VidSage</span>
                 <span class="text-muted-warm" style="font-size:.68rem">{{ msg.results.length }} results</span>
               </div>
-
               <div *ngIf="!msg.results.length" class="text-muted-warm small fst-italic">No results found.</div>
-
               <div *ngIf="msg.results.length" class="results-grid">
                 <div *ngFor="let r of msg.results" class="result-mini d-flex gap-2">
                   <img *ngIf="r.thumbnail" [src]="r.thumbnail" class="result-thumb flex-shrink-0" />
                   <div class="min-w-0">
                     <div class="fw-semibold result-title">{{ r.title }}</div>
-                    <div class="text-muted-warm" style="font-size:.72rem">
-                      <i class="bi bi-person me-1"></i>{{ r.channel }}
-                    </div>
+                    <div class="text-muted-warm" style="font-size:.72rem"><i class="bi bi-person me-1"></i>{{ r.channel }}</div>
                     <div *ngIf="r.description" class="result-desc">{{ r.description | slice:0:120 }}{{ r.description.length > 120 ? '...' : '' }}</div>
+                    <div *ngIf="r.score != null" class="text-muted-warm" style="font-size:.65rem">Score: {{ r.score }}</div>
                   </div>
                 </div>
               </div>
@@ -172,9 +235,7 @@
           </div>
         </div>
 
-        <!-- Pagination -->
-        <div *ngIf="messagesTotalPages > 1"
-             class="d-flex justify-content-between align-items-center py-2">
+        <div *ngIf="messagesTotalPages > 1" class="d-flex justify-content-between align-items-center py-2">
           <small class="text-muted-warm">Page {{ messagesPage }} of {{ messagesTotalPages }}</small>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" [class.disabled]="messagesPage === 1">

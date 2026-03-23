@@ -14,7 +14,8 @@
   <!-- New conversation inline form -->
   <div *ngIf="showNewForm" class="new-conv-card p-4 mb-4">
     <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Create New Conversation</h6>
-    <div class="row g-3">
+
+    <div class="row g-3 mb-3">
       <div class="col-md-5">
         <label class="form-label fw-semibold small">Conversation Name</label>
         <input class="form-control custom-input" placeholder="e.g. ML Tutorial Search"
@@ -22,17 +23,71 @@
       </div>
       <div class="col-md-4">
         <label class="form-label fw-semibold small">Model</label>
-        <select class="form-select custom-select" [(ngModel)]="newModelId">
+        <select class="form-select custom-select" [(ngModel)]="newModelId"
+                (ngModelChange)="onNewModelChange()">
           <option [ngValue]="null">No model selected</option>
           <option *ngFor="let m of models" [ngValue]="m.id">{{ m.model_name }}</option>
         </select>
       </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-coral w-100 rounded-pill" (click)="createConversation()"
-                [disabled]="!newName.trim()">
-          <i class="bi bi-check-lg me-1"></i>Create
-        </button>
+    </div>
+
+    <!-- Dynamic settings from approach -->
+    <div *ngIf="newSettingsFields.length > 0" class="settings-section mb-3">
+      <div class="settings-divider mb-2">
+        <span class="fw-semibold small text-coral"><i class="bi bi-sliders me-1"></i>Search Configuration</span>
       </div>
+      <div class="d-flex flex-column gap-3">
+        <div *ngFor="let f of newSettingsFields">
+          <label class="form-label fw-semibold small mb-1">{{ f.label }}</label>
+          <div *ngIf="f.description" class="text-muted-warm mb-1" style="font-size:.68rem">{{ f.description }}</div>
+
+          <!-- Dropdown -->
+          <select *ngIf="f.type === 'dropdown'" class="form-select form-select-sm custom-select"
+                  [(ngModel)]="newSettingsForm[f.key]">
+            <option *ngFor="let opt of f.options" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+
+          <!-- Number -->
+          <input *ngIf="f.type === 'number'" type="number" class="form-control form-control-sm custom-input"
+                 [(ngModel)]="newSettingsForm[f.key]"
+                 [attr.min]="f.min" [attr.max]="f.max" [attr.step]="f.step" />
+
+          <!-- Text -->
+          <input *ngIf="f.type === 'text'" type="text" class="form-control form-control-sm custom-input"
+                 [(ngModel)]="newSettingsForm[f.key]" />
+
+          <!-- Radio -->
+          <div *ngIf="f.type === 'radio'" class="d-flex flex-column gap-1 mt-1">
+            <label *ngFor="let opt of f.options" class="form-check d-flex align-items-center gap-2">
+              <input type="radio" class="form-check-input" [name]="'new_' + f.key"
+                     [value]="opt.value" [(ngModel)]="newSettingsForm[f.key]" />
+              <span class="small">{{ opt.label }}</span>
+            </label>
+          </div>
+
+          <!-- Checkbox -->
+          <div *ngIf="f.type === 'checkbox'" class="form-check mt-1">
+            <input type="checkbox" class="form-check-input" [(ngModel)]="newSettingsForm[f.key]" />
+          </div>
+
+          <!-- Multi-select -->
+          <div *ngIf="f.type === 'multi-select'" class="d-flex flex-column gap-1 mt-1">
+            <label *ngFor="let opt of f.options" class="form-check d-flex align-items-center gap-2">
+              <input type="checkbox" class="form-check-input"
+                     [checked]="(newSettingsForm[f.key] || []).includes(opt.value)"
+                     (change)="toggleMultiSelect(f.key, opt.value)" />
+              <span class="small">{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-coral rounded-pill px-4" (click)="createConversation()"
+              [disabled]="!newName.trim()">
+        <i class="bi bi-check-lg me-1"></i>Create Conversation
+      </button>
     </div>
   </div>
 
@@ -73,7 +128,15 @@
         <div class="text-muted-warm small">
           <i class="bi bi-cpu me-1"></i>{{ modelName(c.model_id) }}
           <span class="mx-2">·</span>
+          {{ c.message_count }} msg{{ c.message_count !== 1 ? 's' : '' }}
+          <span class="mx-2">·</span>
           {{ c.updated_at | date:'MMM d, y h:mm a' }}
+        </div>
+        <!-- Settings pills -->
+        <div *ngIf="settingEntries(c).length > 0" class="d-flex flex-wrap gap-1 mt-1">
+          <span *ngFor="let s of settingEntries(c)" class="setting-pill">
+            {{ s.label }}: <strong>{{ s.value }}</strong>
+          </span>
         </div>
       </div>
 

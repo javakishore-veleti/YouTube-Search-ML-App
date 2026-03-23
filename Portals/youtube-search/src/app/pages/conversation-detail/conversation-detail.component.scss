@@ -28,7 +28,7 @@
   border-radius: 99px; padding: 2px 8px;
 }
 
-/* ── Search input ── */
+/* Search input */
 .search-card {
   background: #fff; border: 1px solid #f0ebe6; border-radius: 14px;
 }
@@ -39,16 +39,17 @@
 
 .spinner-border.text-coral { color: #FF6B6B !important; }
 
-/* ── Conversation Settings accordion ── */
-.settings-card {
+/* Accordion card (shared for all collapsible sections) */
+.accordion-card {
   background: #fff; border: 1px solid #f0ebe6; border-radius: 14px; overflow: hidden;
 }
-.settings-header {
+.accordion-header {
   cursor: pointer; transition: background .12s;
   &:hover { background: #fef9f4; }
 }
-.settings-body { border-top: 1px solid #f5f0ec; padding-top: .75rem !important; }
+.accordion-body { border-top: 1px solid #f5f0ec; padding-top: .75rem !important; }
 
+/* Settings table */
 .settings-table {
   width: 100%; border-collapse: collapse;
   tr { border-bottom: 1px solid #f5f0ec; &:last-child { border: none; } }
@@ -61,22 +62,18 @@
   padding: .4rem .5rem; font-size: .85rem; color: #3d3530;
 }
 
-/* ── Conversation History accordion ── */
-.history-card {
-  background: #fff; border: 1px solid #f0ebe6; border-radius: 14px; overflow: hidden;
+/* Dynamic setting fields */
+.setting-field {
+  .form-label { color: #3d3530; }
+  .form-check-input:checked { background-color: #FF6B6B; border-color: #FF6B6B; }
 }
-.history-header {
-  cursor: pointer; transition: background .12s;
-  &:hover { background: #fef9f4; }
-}
-.history-body { border-top: 1px solid #f5f0ec; padding-top: .75rem !important; }
 
 .bg-muted-warm {
   background: #e8e3de !important; color: #6b5e54 !important;
   font-size: .62rem; font-weight: 700; border-radius: 99px; padding: 1px 7px;
 }
 
-/* ── Chat entries ── */
+/* Chat entries */
 .chat-entry {
   border-bottom: 1px solid #f5f0ec; padding-bottom: 1rem;
   &:last-child { border-bottom: none; }

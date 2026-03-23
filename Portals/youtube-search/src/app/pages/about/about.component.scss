@@ -25,16 +25,42 @@
   span { font-weight: 500; color: #4a4a4a; }
 }
 
-/* ── Table of Contents ── */
+/* Approach selector */
+.approach-selector-card {
+  background: #fff; border: 1px solid #f0ebe6; border-radius: 16px;
+}
+.custom-select {
+  border-radius: 12px; border: 2px solid #ffd6d6; padding: .6rem 1rem;
+  font-weight: 500;
+  &:focus { border-color: #FF6B6B; box-shadow: 0 0 0 3px rgba(255,107,107,.15); }
+}
+
+/* Approach hero */
+.approach-hero {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff9e6 100%);
+  border: 1px solid #ffd6d6; border-radius: 16px;
+}
+.approach-icon-lg {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+
+/* Overview */
+.overview-card {
+  background: #fef9f4; border: 1px solid #f0ebe6; border-radius: 14px;
+}
+.overview-text {
+  font-size: .9rem; line-height: 1.65; color: #4a4a4a;
+}
+
+/* Table of Contents */
 .toc-card {
-  background: #fff; border-radius: 16px;
-  border: 1px solid #f0ebe6;
+  background: #fff; border: 1px solid #f0ebe6; border-radius: 16px;
 }
-
-.toc-list {
-  display: flex; flex-direction: column; gap: .35rem;
-}
-
+.toc-list { display: flex; flex-direction: column; gap: .35rem; }
 .toc-item {
   padding: .45rem .75rem; border-radius: 10px;
   text-decoration: none; color: #3d3530;
@@ -42,7 +68,6 @@
   transition: all .15s; cursor: pointer;
   &:hover { background: #fff5f5; transform: translateX(4px); color: #FF6B6B; }
 }
-
 .toc-num {
   width: 22px; height: 22px; border-radius: 50%;
   background: #f5f0ec; color: #7a6e6e;
@@ -50,18 +75,16 @@
   font-size: .68rem; font-weight: 700; flex-shrink: 0;
 }
 
-/* ── Topic accordions ── */
+/* Topic accordions */
 .topic-card {
   background: #fff; border: 1px solid #f0ebe6; border-radius: 14px;
   overflow: hidden; transition: box-shadow .15s;
   &:hover { box-shadow: 0 4px 16px rgba(255,107,107,.08); }
 }
-
 .topic-header {
   cursor: pointer; transition: background .12s;
   &:hover { background: #fef9f4; }
 }
-
 .topic-num {
   width: 28px; height: 28px; border-radius: 50%;
   background: linear-gradient(135deg, #FF6B6B, #FF8E53);
@@ -69,14 +92,12 @@
   display: flex; align-items: center; justify-content: center;
   font-size: .72rem; font-weight: 700; flex-shrink: 0;
 }
-
 .topic-icon { font-size: 1.1rem; color: #FF8E53; }
-
 .topic-body {
   border-top: 1px solid #f5f0ec;
   padding-top: .75rem !important;
 }
-
 .topic-text {
   font-size: .88rem; line-height: 1.65; color: #4a4a4a;
+  white-space: pre-line;
 }
